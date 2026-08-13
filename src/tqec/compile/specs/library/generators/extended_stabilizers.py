@@ -174,10 +174,13 @@ def _make_spatial_cube_arm_memory_plaquette_down(
         base_moments[1].append("CX", [s1, s2], [])
         base_moments[5].append("CX", [s2, s1], [])
     else:
+        if is_flipping and not reset:
+            base_moments[0].append("MX", [s1], [])
         base_moments[1].append("RZ", [s1], [])
         base_moments[2].append("CX", [s2, s1], [])
         base_moments[6].append("CX", [s1, s2], [])
-        base_moments[7].append("MX", [s1], [])
+        if not is_flipping or measurement:
+            base_moments[7].append("MX", [s1], [])
 
     # Add controlled gates
     if left_qubit.p is not None and left_qubit.n is not None:
