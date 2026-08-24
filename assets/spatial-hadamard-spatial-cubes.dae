@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset>
+    <contributor>
+      <author>TQEC Community</author>
+      <authoring_tool>https://github.com/tqec/tqec</authoring_tool>
+    </contributor>
+    <unit name="inch" meter="0.02539999969303608"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_effects>
+    <effect id="X_red_effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <lambert>
+            <diffuse><color>1 0.498 0.498 1</color></diffuse>
+            <transparent><color>1 0.498 0.498 1</color></transparent>
+            <transparency><float>1</float></transparency>
+          </lambert>
+        </technique>
+        <extra><technique profile="GOOGLEEARTH"><double_sided>1</double_sided></technique></extra>
+      </profile_COMMON>
+    </effect>
+    <effect id="Z_blue_effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <lambert>
+            <diffuse><color>0.451 0.588 1 1</color></diffuse>
+            <transparent><color>0.451 0.588 1 1</color></transparent>
+            <transparency><float>1</float></transparency>
+          </lambert>
+        </technique>
+        <extra><technique profile="GOOGLEEARTH"><double_sided>1</double_sided></technique></extra>
+      </profile_COMMON>
+    </effect>
+    <effect id="Y_green_effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <lambert>
+            <diffuse><color>0.388 0.776 0.463 1</color></diffuse>
+            <transparent><color>0.388 0.776 0.463 1</color></transparent>
+            <transparency><float>1</float></transparency>
+          </lambert>
+        </technique>
+        <extra><technique profile="GOOGLEEARTH"><double_sided>1</double_sided></technique></extra>
+      </profile_COMMON>
+    </effect>
+    <effect id="H_yellow_effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <lambert>
+            <diffuse><color>1 1 0.396 1</color></diffuse>
+            <transparent><color>1 1 0.396 1</color></transparent>
+            <transparency><float>1</float></transparency>
+          </lambert>
+        </technique>
+        <extra><technique profile="GOOGLEEARTH"><double_sided>1</double_sided></technique></extra>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_materials>
+    <material id="X_red_material" name="X_red_material">
+      <instance_effect url="#X_red_effect"/>
+    </material>
+    <material id="Z_blue_material" name="Z_blue_material">
+      <instance_effect url="#Z_blue_effect"/>
+    </material>
+    <material id="Y_green_material" name="Y_green_material">
+      <instance_effect url="#Y_green_effect"/>
+    </material>
+    <material id="H_yellow_material" name="H_yellow_material">
+      <instance_effect url="#H_yellow_effect"/>
+    </material>
+  </library_materials>
+  <library_geometries>
+    <geometry id="geom_zzx" name="geom_zzx">
+      <mesh>
+        <source id="geom_zzx_pos">
+          <float_array id="geom_zzx_pos_arr" count="9">0 0 0 1 0 0 0 1 0</float_array>
+          <technique_common>
+            <accessor source="#geom_zzx_pos_arr" count="3" stride="3">
+              <param name="X" type="float"/><param name="Y" type="float"/><param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="geom_zzx_norm">
+          <float_array id="geom_zzx_norm_arr" count="9">0 0 1 0 0 1 0 0 1</float_array>
+          <technique_common>
+            <accessor source="#geom_zzx_norm_arr" count="3" stride="3">
+              <param name="X" type="float"/><param name="Y" type="float"/><param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="geom_zzx_vtx">
+          <input semantic="POSITION" source="#geom_zzx_pos"/>
+        </vertices>
+        <triangles count="1" material="MaterialSymbol">
+          <input semantic="VERTEX" source="#geom_zzx_vtx" offset="0"/>
+          <input semantic="NORMAL" source="#geom_zzx_norm" offset="1"/>
+          <p>0 0 1 1 2 2</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="geom_zoxh" name="geom_zoxh">
+      <mesh>
+        <source id="geom_zoxh_pos">
+          <float_array id="geom_zoxh_pos_arr" count="9">0 0 0 1 0 0 0 1 0</float_array>
+          <technique_common>
+            <accessor source="#geom_zoxh_pos_arr" count="3" stride="3">
+              <param name="X" type="float"/><param name="Y" type="float"/><param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="geom_zoxh_norm">
+          <float_array id="geom_zoxh_norm_arr" count="9">0 0 1 0 0 1 0 0 1</float_array>
+          <technique_common>
+            <accessor source="#geom_zoxh_norm_arr" count="3" stride="3">
+              <param name="X" type="float"/><param name="Y" type="float"/><param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="geom_zoxh_vtx">
+          <input semantic="POSITION" source="#geom_zoxh_pos"/>
+        </vertices>
+        <triangles count="1" material="MaterialSymbol">
+          <input semantic="VERTEX" source="#geom_zoxh_vtx" offset="0"/>
+          <input semantic="NORMAL" source="#geom_zoxh_norm" offset="1"/>
+          <p>0 0 1 1 2 2</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="geom_xxz" name="geom_xxz">
+      <mesh>
+        <source id="geom_xxz_pos">
+          <float_array id="geom_xxz_pos_arr" count="9">0 0 0 1 0 0 0 1 0</float_array>
+          <technique_common>
+            <accessor source="#geom_xxz_pos_arr" count="3" stride="3">
+              <param name="X" type="float"/><param name="Y" type="float"/><param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="geom_xxz_norm">
+          <float_array id="geom_xxz_norm_arr" count="9">0 0 1 0 0 1 0 0 1</float_array>
+          <technique_common>
+            <accessor source="#geom_xxz_norm_arr" count="3" stride="3">
+              <param name="X" type="float"/><param name="Y" type="float"/><param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="geom_xxz_vtx">
+          <input semantic="POSITION" source="#geom_xxz_pos"/>
+        </vertices>
+        <triangles count="1" material="MaterialSymbol">
+          <input semantic="VERTEX" source="#geom_xxz_vtx" offset="0"/>
+          <input semantic="NORMAL" source="#geom_xxz_norm" offset="1"/>
+          <p>0 0 1 1 2 2</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_nodes>
+    <node id="lib_zzx" name="zzx" type="NODE">
+      <instance_geometry url="#geom_zzx">
+        <bind_material>
+          <technique_common>
+            <instance_material symbol="MaterialSymbol" target="#X_red_material"/>
+          </technique_common>
+        </bind_material>
+      </instance_geometry>
+    </node>
+    <node id="lib_zoxh" name="zoxh" type="NODE">
+      <instance_geometry url="#geom_zoxh">
+        <bind_material>
+          <technique_common>
+            <instance_material symbol="MaterialSymbol" target="#X_red_material"/>
+          </technique_common>
+        </bind_material>
+      </instance_geometry>
+    </node>
+    <node id="lib_xxz" name="xxz" type="NODE">
+      <instance_geometry url="#geom_xxz">
+        <bind_material>
+          <technique_common>
+            <instance_material symbol="MaterialSymbol" target="#X_red_material"/>
+          </technique_common>
+        </bind_material>
+      </instance_geometry>
+    </node>
+  </library_nodes>
+  <library_visual_scenes>
+    <visual_scene id="ID_scene" name="SketchUp">
+      <node id="ID_sketchup" name="SketchUp" type="NODE">
+        <node id="ID0" name="instance_0" type="NODE">
+          <matrix>
+1 0 0 3 0 1 0 3 0 0 1 0 0 0 0 1
+          </matrix>
+          <instance_node url="#lib_zzx"/>
+        </node>
+        <node id="ID1" name="instance_1" type="NODE">
+          <matrix>
+1 0 0 3 0 1 0 4 0 0 1 0 0 0 0 1
+          </matrix>
+          <instance_node url="#lib_zoxh"/>
+        </node>
+        <node id="ID2" name="instance_2" type="NODE">
+          <matrix>
+1 0 0 3 0 1 0 6 0 0 1 0 0 0 0 1
+          </matrix>
+          <instance_node url="#lib_xxz"/>
+        </node>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#ID_scene"/>
+  </scene>
+</COLLADA>
