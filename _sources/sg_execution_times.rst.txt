@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**41:19.351** total execution time for 5 files **from all galleries**:
+**42:46.372** total execution time for 6 files **from all galleries**:
 
 .. container::
 
@@ -43,6 +43,9 @@ Computation times
      - 0.0
    * - :ref:`sphx_glr_auto_examples_move_rotation.py` (``gallery/move_rotation.py``)
      - 02:21.980
+     - 0.0
+   * - :ref:`sphx_glr_auto_examples_h.py` (``gallery/h.py``)
+     - 01:27.021
      - 0.0
    * - :ref:`sphx_glr_auto_examples_memory.py` (``gallery/memory.py``)
      - 00:32.274
