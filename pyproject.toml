@@ -59,6 +59,8 @@ dependencies = [
   "tqecd>=0.2.1",
   "typing-extensions>=4.2",
   "typing-extensions>=4.12; python_version >= '3.13'",
+  "pandas>=2.3.3",
+  "seaborn>=0.13.2",
 ]
 
 
