@@ -1,0 +1,3 @@
+{"conventions": ["fixed_bulk"], "ks": [1, 2], "ps": [0.001, 0.003],
+ "noise_models": ["uniform_depolarizing"], "decoders": ["pymatching"],
+ "max_shots": 2000, "max_errors": null}

@@ -1,0 +1,12 @@
+BLOCKGRAPH 0.1.0;
+
+METADATA: attr_name; value;
+source; TQEC.
+circuit_name; y_half_cube_ymem;
+
+CUBES: index;x;y;z;kind;label;
+(0, 0, 0);0;0;0;Y;;
+(0, 0, 1);0;0;1;Y;;
+
+PIPES: src;tgt;kind;
+(0, 0, 0);(0, 0, 1);ZXO;
