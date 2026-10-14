@@ -1,0 +1,92 @@
+{
+  "name": "y_half_cube_ymem_ztop",
+  "cubes": [
+    {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "kind": "Y",
+      "label": "",
+      "condition": null,
+      "transform": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "position": [
+        0,
+        0,
+        1
+      ],
+      "kind": "Y",
+      "label": "",
+      "condition": null,
+      "transform": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    }
+  ],
+  "pipes": [
+    {
+      "u": [
+        0,
+        0,
+        0
+      ],
+      "v": [
+        0,
+        0,
+        1
+      ],
+      "kind": "XZO",
+      "transform": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    }
+  ],
+  "ports": {}
+}

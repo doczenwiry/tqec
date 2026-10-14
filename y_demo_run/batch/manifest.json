@@ -1,0 +1,1330 @@
+{
+  "run_id": "batch",
+  "config": {
+    "conventions": [
+      "fixed_bulk"
+    ],
+    "ks": [
+      1,
+      2
+    ],
+    "ps": [
+      0.001,
+      0.003
+    ],
+    "noise_models": [
+      "uniform_depolarizing"
+    ],
+    "decoders": [
+      "pymatching"
+    ],
+    "manhattan_radius": 2,
+    "max_shots": 2000,
+    "max_errors": null,
+    "max_batch_size": null,
+    "max_batch_seconds": null,
+    "expected_distance": "2*k + 1",
+    "circuit_mode": "materialized",
+    "logical_observables": "all",
+    "random_seed": null,
+    "split_components": false
+  },
+  "units": [
+    {
+      "gadget_id": "s00_y_half_cube_g01",
+      "source": "y_half_cube_g01.bgraph",
+      "name": "y_half_cube_g01",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YYYY",
+          "surface_id": "f47eeae6d7ae7386",
+          "area": 18
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s00_y_half_cube_g01.bulk.k1.stim",
+        "2": "circuits/s00_y_half_cube_g01.bulk.k2.stim"
+      },
+      "graph": "graphs/s00_y_half_cube_g01.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          1,
+          0,
+          0
+        ],
+        "maximum": [
+          3,
+          2,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            1,
+            0,
+            0
+          ],
+          "maximum": [
+            3,
+            2,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s01_y_half_cube_g02",
+      "source": "y_half_cube_g02.bgraph",
+      "name": "y_half_cube_g02",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YYYY",
+          "surface_id": "905492d1868a9fd5",
+          "area": 18
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s01_y_half_cube_g02.bulk.k1.stim",
+        "2": "circuits/s01_y_half_cube_g02.bulk.k2.stim"
+      },
+      "graph": "graphs/s01_y_half_cube_g02.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          5,
+          0,
+          0
+        ],
+        "maximum": [
+          7,
+          2,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            5,
+            0,
+            0
+          ],
+          "maximum": [
+            7,
+            2,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s02_y_half_cube_g03",
+      "source": "y_half_cube_g03.bgraph",
+      "name": "y_half_cube_g03",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "XIIX",
+          "surface_id": "76e60e8477cdd492",
+          "area": 3
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s02_y_half_cube_g03.bulk.k1.stim",
+        "2": "circuits/s02_y_half_cube_g03.bulk.k2.stim"
+      },
+      "graph": "graphs/s02_y_half_cube_g03.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          8,
+          0,
+          0
+        ],
+        "maximum": [
+          10,
+          2,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            8,
+            0,
+            0
+          ],
+          "maximum": [
+            10,
+            2,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s03_y_half_cube_g03_ztop",
+      "source": "y_half_cube_g03_ztop.bgraph",
+      "name": "y_half_cube_g03_ztop",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "XIIX",
+          "surface_id": "645a838ee33b6d63",
+          "area": 3
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s03_y_half_cube_g03_ztop.bulk.k1.stim",
+        "2": "circuits/s03_y_half_cube_g03_ztop.bulk.k2.stim"
+      },
+      "graph": "graphs/s03_y_half_cube_g03_ztop.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          0,
+          8,
+          0
+        ],
+        "maximum": [
+          2,
+          10,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            0,
+            8,
+            0
+          ],
+          "maximum": [
+            2,
+            10,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s04_y_half_cube_g04",
+      "source": "y_half_cube_g04.bgraph",
+      "name": "y_half_cube_g04",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YYYY",
+          "surface_id": "37a816e2dcb3fcc2",
+          "area": 18
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s04_y_half_cube_g04.bulk.k1.stim",
+        "2": "circuits/s04_y_half_cube_g04.bulk.k2.stim"
+      },
+      "graph": "graphs/s04_y_half_cube_g04.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          15,
+          0,
+          -1
+        ],
+        "maximum": [
+          17,
+          2,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            15,
+            0,
+            -1
+          ],
+          "maximum": [
+            17,
+            2,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s05_y_half_cube_g05",
+      "source": "y_half_cube_g05.bgraph",
+      "name": "y_half_cube_g05",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YYYY",
+          "surface_id": "b7794ca03ad5aad1",
+          "area": 18
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s05_y_half_cube_g05.bulk.k1.stim",
+        "2": "circuits/s05_y_half_cube_g05.bulk.k2.stim"
+      },
+      "graph": "graphs/s05_y_half_cube_g05.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          18,
+          0,
+          0
+        ],
+        "maximum": [
+          20,
+          2,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            18,
+            0,
+            0
+          ],
+          "maximum": [
+            20,
+            2,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s06_y_half_cube_g06",
+      "source": "y_half_cube_g06.bgraph",
+      "name": "y_half_cube_g06",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YYYY",
+          "surface_id": "7eea5f87bf2f9e7d",
+          "area": 18
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s06_y_half_cube_g06.bulk.k1.stim",
+        "2": "circuits/s06_y_half_cube_g06.bulk.k2.stim"
+      },
+      "graph": "graphs/s06_y_half_cube_g06.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          21,
+          0,
+          0
+        ],
+        "maximum": [
+          23,
+          2,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            21,
+            0,
+            0
+          ],
+          "maximum": [
+            23,
+            2,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s07_y_half_cube_g07",
+      "source": "y_half_cube_g07.bgraph",
+      "name": "y_half_cube_g07",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YYYY",
+          "surface_id": "2167ba737a8e0087",
+          "area": 18
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s07_y_half_cube_g07.bulk.k1.stim",
+        "2": "circuits/s07_y_half_cube_g07.bulk.k2.stim"
+      },
+      "graph": "graphs/s07_y_half_cube_g07.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          25,
+          0,
+          0
+        ],
+        "maximum": [
+          27,
+          2,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            25,
+            0,
+            0
+          ],
+          "maximum": [
+            27,
+            2,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s08_y_half_cube_g08",
+      "source": "y_half_cube_g08.bgraph",
+      "name": "y_half_cube_g08",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YY",
+          "surface_id": "a6911c65a00fa49d",
+          "area": 10
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s08_y_half_cube_g08.bulk.k1.stim",
+        "2": "circuits/s08_y_half_cube_g08.bulk.k2.stim"
+      },
+      "graph": "graphs/s08_y_half_cube_g08.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          29,
+          1,
+          0
+        ],
+        "maximum": [
+          31,
+          1,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            29,
+            1,
+            0
+          ],
+          "maximum": [
+            31,
+            1,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s09_y_half_cube_g08_xtop",
+      "source": "y_half_cube_g08_xtop.bgraph",
+      "name": "y_half_cube_g08_xtop",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YY",
+          "surface_id": "929e9e1664d56fbe",
+          "area": 10
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s09_y_half_cube_g08_xtop.bulk.k1.stim",
+        "2": "circuits/s09_y_half_cube_g08_xtop.bulk.k2.stim"
+      },
+      "graph": "graphs/s09_y_half_cube_g08_xtop.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          1,
+          29,
+          0
+        ],
+        "maximum": [
+          1,
+          31,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            1,
+            29,
+            0
+          ],
+          "maximum": [
+            1,
+            31,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s10_y_half_cube_g09",
+      "source": "y_half_cube_g09.bgraph",
+      "name": "y_half_cube_g09",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YY",
+          "surface_id": "e91cd2b9bd3bdb2c",
+          "area": 8
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s10_y_half_cube_g09.bulk.k1.stim",
+        "2": "circuits/s10_y_half_cube_g09.bulk.k2.stim"
+      },
+      "graph": "graphs/s10_y_half_cube_g09.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          32,
+          1,
+          0
+        ],
+        "maximum": [
+          33,
+          1,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            32,
+            1,
+            0
+          ],
+          "maximum": [
+            33,
+            1,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s11_y_half_cube_g09_xtop",
+      "source": "y_half_cube_g09_xtop.bgraph",
+      "name": "y_half_cube_g09_xtop",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YY",
+          "surface_id": "5025a474caee56af",
+          "area": 8
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s11_y_half_cube_g09_xtop.bulk.k1.stim",
+        "2": "circuits/s11_y_half_cube_g09_xtop.bulk.k2.stim"
+      },
+      "graph": "graphs/s11_y_half_cube_g09_xtop.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          1,
+          32,
+          0
+        ],
+        "maximum": [
+          1,
+          33,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            1,
+            32,
+            0
+          ],
+          "maximum": [
+            1,
+            33,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s12_y_half_cube_g10",
+      "source": "y_half_cube_g10.bgraph",
+      "name": "y_half_cube_g10",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YY",
+          "surface_id": "e3e87e0d4cd94d6f",
+          "area": 8
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s12_y_half_cube_g10.bulk.k1.stim",
+        "2": "circuits/s12_y_half_cube_g10.bulk.k2.stim"
+      },
+      "graph": "graphs/s12_y_half_cube_g10.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          34,
+          1,
+          0
+        ],
+        "maximum": [
+          34,
+          2,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            34,
+            1,
+            0
+          ],
+          "maximum": [
+            34,
+            2,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s13_y_half_cube_g10_ztop",
+      "source": "y_half_cube_g10_ztop.bgraph",
+      "name": "y_half_cube_g10_ztop",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YY",
+          "surface_id": "87f454d8f81c806f",
+          "area": 8
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s13_y_half_cube_g10_ztop.bulk.k1.stim",
+        "2": "circuits/s13_y_half_cube_g10_ztop.bulk.k2.stim"
+      },
+      "graph": "graphs/s13_y_half_cube_g10_ztop.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          1,
+          34,
+          0
+        ],
+        "maximum": [
+          2,
+          34,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            1,
+            34,
+            0
+          ],
+          "maximum": [
+            2,
+            34,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s14_y_half_cube_g11",
+      "source": "y_half_cube_g11.bgraph",
+      "name": "y_half_cube_g11",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YY",
+          "surface_id": "87a8818b876228d3",
+          "area": 10
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s14_y_half_cube_g11.bulk.k1.stim",
+        "2": "circuits/s14_y_half_cube_g11.bulk.k2.stim"
+      },
+      "graph": "graphs/s14_y_half_cube_g11.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          36,
+          1,
+          0
+        ],
+        "maximum": [
+          36,
+          3,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            36,
+            1,
+            0
+          ],
+          "maximum": [
+            36,
+            3,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s15_y_half_cube_g11_ztop",
+      "source": "y_half_cube_g11_ztop.bgraph",
+      "name": "y_half_cube_g11_ztop",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YY",
+          "surface_id": "c21547535009c93b",
+          "area": 10
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s15_y_half_cube_g11_ztop.bulk.k1.stim",
+        "2": "circuits/s15_y_half_cube_g11_ztop.bulk.k2.stim"
+      },
+      "graph": "graphs/s15_y_half_cube_g11_ztop.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          1,
+          36,
+          0
+        ],
+        "maximum": [
+          3,
+          36,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            1,
+            36,
+            0
+          ],
+          "maximum": [
+            3,
+            36,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s16_y_half_cube_s_gate_x",
+      "source": "y_half_cube_s_gate_x.bgraph",
+      "name": "y_half_cube_s_gate_x",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "XYY",
+          "surface_id": "0d3fc7a0b5c2a8cf",
+          "area": 9
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s16_y_half_cube_s_gate_x.bulk.k1.stim",
+        "2": "circuits/s16_y_half_cube_s_gate_x.bulk.k2.stim"
+      },
+      "graph": "graphs/s16_y_half_cube_s_gate_x.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          0,
+          0,
+          0
+        ],
+        "maximum": [
+          1,
+          0,
+          2
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            0,
+            0,
+            0
+          ],
+          "maximum": [
+            1,
+            0,
+            2
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s17_y_half_cube_s_gate_x_xtop",
+      "source": "y_half_cube_s_gate_x_xtop.bgraph",
+      "name": "y_half_cube_s_gate_x_xtop",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "XYY",
+          "surface_id": "64fc1cdf8a4eecbe",
+          "area": 9
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s17_y_half_cube_s_gate_x_xtop.bulk.k1.stim",
+        "2": "circuits/s17_y_half_cube_s_gate_x_xtop.bulk.k2.stim"
+      },
+      "graph": "graphs/s17_y_half_cube_s_gate_x_xtop.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          0,
+          0,
+          0
+        ],
+        "maximum": [
+          0,
+          1,
+          2
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            0,
+            0,
+            0
+          ],
+          "maximum": [
+            0,
+            1,
+            2
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s18_y_half_cube_s_gate_y",
+      "source": "y_half_cube_s_gate_y.bgraph",
+      "name": "y_half_cube_s_gate_y",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YYX",
+          "surface_id": "dd8963ac9fdae75d",
+          "area": 9
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s18_y_half_cube_s_gate_y.bulk.k1.stim",
+        "2": "circuits/s18_y_half_cube_s_gate_y.bulk.k2.stim"
+      },
+      "graph": "graphs/s18_y_half_cube_s_gate_y.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          0,
+          0,
+          0
+        ],
+        "maximum": [
+          1,
+          0,
+          2
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            0,
+            0,
+            0
+          ],
+          "maximum": [
+            1,
+            0,
+            2
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s19_y_half_cube_s_gate_y_xtop",
+      "source": "y_half_cube_s_gate_y_xtop.bgraph",
+      "name": "y_half_cube_s_gate_y_xtop",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YYX",
+          "surface_id": "d74676151901e946",
+          "area": 9
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s19_y_half_cube_s_gate_y_xtop.bulk.k1.stim",
+        "2": "circuits/s19_y_half_cube_s_gate_y_xtop.bulk.k2.stim"
+      },
+      "graph": "graphs/s19_y_half_cube_s_gate_y_xtop.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          0,
+          0,
+          0
+        ],
+        "maximum": [
+          0,
+          1,
+          2
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            0,
+            0,
+            0
+          ],
+          "maximum": [
+            0,
+            1,
+            2
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s20_y_half_cube_s_gate_z",
+      "source": "y_half_cube_s_gate_z.bgraph",
+      "name": "y_half_cube_s_gate_z",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "ZIZ",
+          "surface_id": "9466c85d1b4ca78f",
+          "area": 3
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s20_y_half_cube_s_gate_z.bulk.k1.stim",
+        "2": "circuits/s20_y_half_cube_s_gate_z.bulk.k2.stim"
+      },
+      "graph": "graphs/s20_y_half_cube_s_gate_z.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          0,
+          0,
+          0
+        ],
+        "maximum": [
+          1,
+          0,
+          2
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            0,
+            0,
+            0
+          ],
+          "maximum": [
+            1,
+            0,
+            2
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s21_y_half_cube_s_gate_z_xtop",
+      "source": "y_half_cube_s_gate_z_xtop.bgraph",
+      "name": "y_half_cube_s_gate_z_xtop",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "ZIZ",
+          "surface_id": "9466c85d1b4ca78f",
+          "area": 3
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s21_y_half_cube_s_gate_z_xtop.bulk.k1.stim",
+        "2": "circuits/s21_y_half_cube_s_gate_z_xtop.bulk.k2.stim"
+      },
+      "graph": "graphs/s21_y_half_cube_s_gate_z_xtop.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          0,
+          0,
+          0
+        ],
+        "maximum": [
+          0,
+          1,
+          2
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            0,
+            0,
+            0
+          ],
+          "maximum": [
+            0,
+            1,
+            2
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s22_y_half_cube_ymem",
+      "source": "y_half_cube_ymem.bgraph",
+      "name": "y_half_cube_ymem",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YY",
+          "surface_id": "a3979455ddf6a16c",
+          "area": 4
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s22_y_half_cube_ymem.bulk.k1.stim",
+        "2": "circuits/s22_y_half_cube_ymem.bulk.k2.stim"
+      },
+      "graph": "graphs/s22_y_half_cube_ymem.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          0,
+          0,
+          0
+        ],
+        "maximum": [
+          0,
+          0,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            0,
+            0,
+            0
+          ],
+          "maximum": [
+            0,
+            0,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    },
+    {
+      "gadget_id": "s23_y_half_cube_ymem_ztop",
+      "source": "y_half_cube_ymem_ztop.bgraph",
+      "name": "y_half_cube_ymem_ztop",
+      "convention": "fixed_bulk",
+      "status": "ready",
+      "logical_observables": [
+        {
+          "external_stabilizer": "YY",
+          "surface_id": "a3979455ddf6a16c",
+          "area": 4
+        }
+      ],
+      "derived_port_cube_kinds": null,
+      "observables": 1,
+      "circuits": {
+        "1": "circuits/s23_y_half_cube_ymem_ztop.bulk.k1.stim",
+        "2": "circuits/s23_y_half_cube_ymem_ztop.bulk.k2.stim"
+      },
+      "graph": "graphs/s23_y_half_cube_ymem_ztop.json",
+      "notes": "",
+      "stage": "",
+      "error": "",
+      "device_frame": {
+        "minimum": [
+          0,
+          0,
+          0
+        ],
+        "maximum": [
+          0,
+          0,
+          1
+        ]
+      },
+      "components": [
+        {
+          "component_id": "c00",
+          "minimum": [
+            0,
+            0,
+            0
+          ],
+          "maximum": [
+            0,
+            0,
+            1
+          ]
+        }
+      ],
+      "observable_components": [
+        "c00"
+      ]
+    }
+  ]
+}
