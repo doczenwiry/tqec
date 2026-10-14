@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build >=0.12.1, <0.13.0"]
+requires = ["uv_build >=0.12.1, <=0.13.0"]
 build-backend = "uv_build"
 
 [project]
@@ -49,7 +49,6 @@ dependencies = [
   "pycollada>=0.8",
   "pymatching>=2.3.1",                                 # Pymatching with correlated matching support
   "pyzx>=0.9.0",
-  "scipy>=1.15",
   "semver>=3.0.0",
   "sinter>=1.14",
   "sphinx-design>=0.6.1",
@@ -209,3 +208,6 @@ testpaths = ["tests"]
 markers = ["slow: mark a test that takes a long time to run."]
 addopts = "-m 'not slow'"
 timeout = 30
+
+[tool.uv.sources]
+topologiq = { git = "https://github.com/tqec/topologiq.git" }
