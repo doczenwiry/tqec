@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
-from tqec.computation.cube import LeafCubeKind, ZXCube
+from tqec.computation.cube import CultivationBlock, LeafCubeKind, ZXCube
 from tqec.computation.pipe import PipeKind
 from tqec.interop.color import TQECColor
 from tqec.utils.enums import Basis
@@ -92,6 +92,8 @@ class BlockGeometries:
         self._load_zx_cube_geometries()
         # 1 y half cube block
         self._load_y_cube_geometry()
+        # 1 cultivation block of height 3
+        self._load_cultivation_block_d3_geometry()
         # 6 pipe blocks without H
         self._load_pipe_without_hadamard_geometries()
         # 6 pipe blocks with H
@@ -141,6 +143,63 @@ class BlockGeometries:
             translation[direction.value] = 1.0 if direction != Direction3D.Z else 0.5
             faces.append(face.shift_by(*translation).with_negated_normal_direction())
         self.geometries[LeafCubeKind.Y_HALF_CUBE] = faces
+
+    def _load_cultivation_block_d3_geometry(self) -> None:
+        """Geometry for the Cultivation block: two columns for the cultivation stages."""
+        mx, px = (SignedDirection3D(Direction3D.X, False), SignedDirection3D(Direction3D.X, True))
+        my, py = (SignedDirection3D(Direction3D.Y, False), SignedDirection3D(Direction3D.Y, True))
+        mz, pz = (SignedDirection3D(Direction3D.Z, False), SignedDirection3D(Direction3D.Z, True))
+
+        stable = 1.0 - 9.0 / 7.0
+        expand = 0.5 - stable
+        d5_top = (7.0 - 9.0 / 7.0) / 2
+        d5_btm = stable - d5_top
+        d3_top = 2 * d5_top
+        d3_btm = stable - d3_top
+
+        face_specifications = [
+            # Target Surface Code confirmed
+            (TQECColor.Y, 1.0, 0.5, mx, FloatPosition3D(0.0, 0.0, 0.5)),
+            (TQECColor.Y, 1.0, 0.5, px, FloatPosition3D(1.0, 0.0, 0.5)),
+            (TQECColor.Y, 0.5, 1.0, my, FloatPosition3D(0.0, 0.0, 0.5)),
+            (TQECColor.Y, 0.5, 1.0, py, FloatPosition3D(0.0, 1.0, 0.5)),
+            # Target Surface Code stabilization
+            (TQECColor.CULTIVATION, 1.0, expand, mx, FloatPosition3D(0.0, 0.0, stable)),
+            (TQECColor.CULTIVATION, 1.0, expand, px, FloatPosition3D(1.0, 0.0, stable)),
+            (TQECColor.CULTIVATION, expand, 1.0, my, FloatPosition3D(0.0, 0.0, stable)),
+            (TQECColor.CULTIVATION, expand, 1.0, py, FloatPosition3D(0.0, 1.0, stable)),
+            (TQECColor.CULTIVATION, 1.0, 1.0, mz, FloatPosition3D(0.0, 0.0, stable)),
+            # Source Surface Code (d=5)
+            (TQECColor.CULTIVATION, 2 / 3, d5_top, mx, FloatPosition3D(1 / 3, 1 / 3, d5_btm)),
+            (TQECColor.CULTIVATION, 2 / 3, d5_top, px, FloatPosition3D(1.0, 1 / 3, d5_btm)),
+            (TQECColor.CULTIVATION, d5_top, 2 / 3, my, FloatPosition3D(1 / 3, 1 / 3, d5_btm)),
+            (TQECColor.CULTIVATION, d5_top, 2 / 3, py, FloatPosition3D(1 / 3, 1.0, d5_btm)),
+            (TQECColor.CULTIVATION, 2 / 3, 2 / 3, mz, FloatPosition3D(1 / 3, 1 / 3, d5_btm)),
+            # Steane Code (d=3)
+            (TQECColor.CULTIVATION, 0.5, d3_top, mx, FloatPosition3D(1 / 6, -1 / 6, d3_btm)),
+            (TQECColor.CULTIVATION, 0.5, d3_top, px, FloatPosition3D(2 / 3, -1 / 6, d3_btm)),
+            (TQECColor.CULTIVATION, d3_top, 0.5, my, FloatPosition3D(1 / 6, -1 / 6, d3_btm)),
+            (TQECColor.CULTIVATION, d3_top, 0.5, py, FloatPosition3D(1 / 6, 1 / 3, d3_btm)),
+            (TQECColor.CULTIVATION, 0.5, 0.5, mz, FloatPosition3D(1 / 6, -1 / 6, d3_btm)),
+            (TQECColor.CULTIVATION, 0.5, 1 / 6, pz, FloatPosition3D(1 / 6, -1 / 6, stable)),
+        ]
+
+        faces_xzc = []
+        faces_zxc = []
+        transposed = {
+            Direction3D.X: Direction3D.Y,
+            Direction3D.Y: Direction3D.X,
+            Direction3D.Z: Direction3D.Z,
+        }
+        for color, w, h, side, position in face_specifications:
+            faces_zxc.append(Face(color, w, h, side, position))
+
+            transposed_normal = SignedDirection3D(transposed[side.direction], side.towards_positive)
+            transposed_position = FloatPosition3D(position.y, position.x, position.z)
+            faces_xzc.append(Face(color, h, w, transposed_normal, transposed_position))
+
+        self.geometries[CultivationBlock.XZC] = faces_xzc
+        self.geometries[CultivationBlock.ZXC] = faces_zxc
 
     def _load_pipe_without_hadamard_geometries(self) -> None:
         """Geometries for ozx, oxz, xoz, zox, xzo, zxo pipes."""

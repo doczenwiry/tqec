@@ -61,24 +61,33 @@ class TQECColor(Enum):
     Y = "Y"
     Z = "Z"
     H = "H"
+    T = "T"
+    CULTIVATION = "CULTIVATION"
     X_CORRELATION = "X_CORRELATION"
     Z_CORRELATION = "Z_CORRELATION"
 
     @property
     def rgba(self) -> RGBA:
         """Return the RGBA representation of the color."""
-        if self == TQECColor.X:
-            return RGBA(255, 127, 127, 1.0)
-        if self == TQECColor.Y:
-            return RGBA(99, 198, 118, 1.0)
-        if self == TQECColor.Z:
-            return RGBA(115, 150, 255, 1.0)
-        if self == TQECColor.H:
-            return RGBA(255, 255, 101, 1.0)
-        if self == TQECColor.X_CORRELATION:
-            return RGBA(255, 0, 0, 0.8)
-        else:  # if self == TQECColor.Z_CORRELATION:
-            return RGBA(0, 0, 255, 0.8)
+        match self:
+            case TQECColor.X:
+                color = RGBA(255, 127, 127, 1.0)
+            case TQECColor.Y:
+                color = RGBA(99, 198, 118, 1.0)
+            case TQECColor.Z:
+                color = RGBA(115, 150, 255, 1.0)
+            case TQECColor.H:
+                color = RGBA(255, 255, 101, 1.0)
+            case TQECColor.T:
+                color = RGBA(217, 102, 217, 1.0)
+            case TQECColor.CULTIVATION:
+                color = RGBA(65, 65, 65, 1.0)
+            case TQECColor.X_CORRELATION:
+                color = RGBA(255, 0, 0, 0.8)
+            case TQECColor.Z_CORRELATION:
+                color = RGBA(0, 0, 255, 0.8)
+
+        return color
 
     def with_zx_flipped(self) -> TQECColor:
         """Return a ``X`` or ``Z`` color from a ``Z`` or ``X`` color and vice versa."""

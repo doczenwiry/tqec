@@ -129,8 +129,10 @@ class _ColladaHTMLViewer:
           }
           // Add edges for better visibility
           const edgesGeometry = new THREE.EdgesGeometry(node.geometry);
+          const edgeColor = node.material.name.startsWith("CULTIVATION")
+            ? new THREE.Color(0x63c676).convertSRGBToLinear() : new THREE.Color(0x000000);
           const edgesMaterial = new THREE.LineBasicMaterial({
-            color: 0x000000,
+            color: edgeColor, toneMapped: false
           });
           const edgeMesh = new THREE.LineSegments(
             edgesGeometry,
