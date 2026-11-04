@@ -1,5 +1,6 @@
 import functools
 from collections.abc import Callable
+from typing import cast
 
 from typing_extensions import override
 
@@ -11,6 +12,7 @@ from tqec.compile.blocks.layers.composed.repeated import RepeatedLayer
 from tqec.compile.specs.base import (
     CubeBuilder,
     CubeSpec,
+    MagicStateCultivation,
     PipeBuilder,
     PipeSpec,
 )
@@ -22,12 +24,13 @@ from tqec.compile.specs.library.generators.schedules import (
     DEFAULT_SCHEDULE_FAMILY,
     PlaquetteScheduleFamily,
 )
-from tqec.computation.cube import ConditionalCubeKind, LeafCubeKind, ZXCube
+from tqec.computation.cube import ConditionalCubeKind, CultivationBlock, LeafCubeKind, ZXCube
 from tqec.plaquette.compilation.base import IdentityPlaquetteCompiler, PlaquetteCompiler
 from tqec.plaquette.plaquette import Plaquettes
 from tqec.plaquette.rpng.translators.base import RPNGTranslator
 from tqec.plaquette.rpng.translators.default import DefaultRPNGTranslator
 from tqec.templates.base import RectangularTemplate
+from tqec.templates.qubit import QubitTemplate
 from tqec.utils.enums import Basis, Orientation
 from tqec.utils.exceptions import TQECError
 from tqec.utils.position import Direction3D
@@ -104,6 +107,8 @@ class FixedBulkCubeBuilder(CubeBuilder):
             raise NotImplementedError("Y cube is not implemented.")
         elif isinstance(kind, ConditionalCubeKind):
             raise NotImplementedError("Conditional cube is not implemented.")
+        elif isinstance(kind, CultivationBlock):
+            raise NotImplementedError("Cultivation block is not implemented.")
         # else
         template, (init, repeat, measure) = self._get_template_and_plaquettes(spec)
         layers: list[BaseLayer | BaseComposedLayer] = [
@@ -423,5 +428,41 @@ class FixedBulkPipeBuilder(PipeBuilder):
         return self._get_spatial_regular_pipe_block(spec, block_temporal_height)
 
 
+class FixedBulkCultivationBuilder(MagicStateCultivation):
+    def __init__(
+        self,
+        compiler: PlaquetteCompiler = IdentityPlaquetteCompiler,
+        translator: RPNGTranslator | None = None,
+        schedule_family: PlaquetteScheduleFamily = DEFAULT_SCHEDULE_FAMILY,
+    ):
+        """Implement the :class:`.CultivationBuilder` interface for the fixed bulk convention.
+
+        This class provides an implementation of Magic State Cultivation support compatible
+        with the fixed-bulk convention.
+        """
+        self._memory_generator = FixedBulkConventionGenerator(
+            translator or DefaultRPNGTranslator(schedule_family.measurement_schedule),
+            compiler,
+            schedule_family,
+        )
+
+    @functools.cache
+    def __call__(self, spec: CubeSpec, block_temporal_height: LinearFunction) -> list[Block]:
+        """Produce the blocks implementing a Cultivation block."""
+        assert isinstance(spec.kind, CultivationBlock)
+
+        x = spec.kind.get_basis_along(Direction3D.X)
+        orientation = Orientation.HORIZONTAL if x == Basis.Z else Orientation.VERTICAL
+
+        template = cast(QubitTemplate, self._memory_generator.get_memory_qubit_raw_template())
+        stabilizer = PlaquetteLayer(
+            template, self._memory_generator.get_memory_qubit_plaquettes(orientation)
+        )
+        memory = Block([stabilizer, RepeatedLayer(stabilizer, block_temporal_height), stabilizer])
+
+        return [memory for _ in range(MagicStateCultivation.ALLOCATION)]
+
+
 FIXED_BULK_CUBE_BUILDER: CubeBuilder = FixedBulkCubeBuilder(IdentityPlaquetteCompiler)
 FIXED_BULK_PIPE_BUILDER: PipeBuilder = FixedBulkPipeBuilder(IdentityPlaquetteCompiler)
+FIXED_BULK_CULTIVATION_BUILDER = FixedBulkCultivationBuilder(IdentityPlaquetteCompiler)

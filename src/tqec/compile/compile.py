@@ -13,7 +13,7 @@ from tqec.compile.observables.abstract_observable import (
     AbstractObservable,
     compile_correlation_surface_to_abstract_observable,
 )
-from tqec.compile.specs.base import CubeSpec, PipeSpec
+from tqec.compile.specs.base import CubeSpec, MagicStateCultivation, PipeSpec
 from tqec.computation.block_graph import BlockGraph
 from tqec.computation.correlation import CorrelationSurface
 from tqec.computation.cube import Cube
@@ -161,14 +161,21 @@ def compile_block_graph(
     graph = TopologicalComputationGraph(
         _DEFAULT_SCALABLE_QUBIT_SHAPE,
         observables=obs_included,
-        observable_builder=convention.triplet.observable_builder,
+        observable_builder=convention.builders.observable_builder,
     )
 
     # 2. Add cubes to the graph
     for cube in block_graph.cubes:
         spec = cube_specs[cube]
         position = BlockPosition3D(cube.position.x, cube.position.y, cube.position.z)
-        graph.add_cube(position, convention.triplet.cube_builder(spec, block_temporal_height))
+        if cube.is_cultivation_block:
+            graph.has_cultivation_blocks = True
+            cultivation_parts = convention.builders.cultivation_builder(spec, block_temporal_height)
+            for index, block in enumerate(cultivation_parts):
+                offset = -(MagicStateCultivation.ALLOCATION - index - 1)
+                graph.add_cube(position.shift_in_direction(Direction3D.Z, offset), block)
+        else:
+            graph.add_cube(position, convention.builders.cube_builder(spec, block_temporal_height))
 
     # 3. Add pipes to the graph
     # Note that the order of the pipes to add is important.
@@ -197,6 +204,6 @@ def compile_block_graph(
                 pipe.kind.is_temporal and pos1.z in temporal_hadamard_z_positions
             ),
         )
-        graph.add_pipe(pos1, pos2, convention.triplet.pipe_builder(key, block_temporal_height))
+        graph.add_pipe(pos1, pos2, convention.builders.pipe_builder(key, block_temporal_height))
 
     return graph

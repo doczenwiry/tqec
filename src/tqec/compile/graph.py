@@ -126,6 +126,7 @@ class TopologicalComputationGraph:
         self._scalable_qubit_shape: Final[PhysicalQubitScalable2D] = scalable_qubit_shape
         self._observables: list[AbstractObservable] | None = observables
         self._observable_builder = observable_builder
+        self.has_cultivation_blocks: bool = False
 
     def add_cube(self, position: BlockPosition3D, block: Block) -> None:
         """Add a new cube at ``position`` implemented by the provided ``block``."""

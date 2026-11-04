@@ -7,11 +7,17 @@ from tqec.compile.observables.fixed_boundary_builder import (
     FIXED_BOUNDARY_OBSERVABLE_BUILDER,
 )
 from tqec.compile.observables.fixed_bulk_builder import FIXED_BULK_OBSERVABLE_BUILDER
+from tqec.compile.specs.base import MagicStateCultivation
 from tqec.compile.specs.library.fixed_boundary import (
     FIXED_BOUNDARY_CUBE_BUILDER,
+    FIXED_BOUNDARY_CULTIVATION_BUILDER,
     FIXED_BOUNDARY_PIPE_BUILDER,
 )
-from tqec.compile.specs.library.fixed_bulk import FixedBulkCubeBuilder, FixedBulkPipeBuilder
+from tqec.compile.specs.library.fixed_bulk import (
+    FixedBulkCubeBuilder,
+    FixedBulkCultivationBuilder,
+    FixedBulkPipeBuilder,
+)
 from tqec.compile.specs.library.generators.schedules import (
     DEFAULT_SCHEDULE_FAMILY,
     PlaquetteScheduleFamily,
@@ -23,7 +29,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
-class ConventionTriplet:
+class ConventionBuilders:
     """Stores the 3 builders needed to implement a new convention.
 
     In order to implement a new way of generating plaquettes and implementing
@@ -34,6 +40,7 @@ class ConventionTriplet:
 
     cube_builder: CubeBuilder
     pipe_builder: PipeBuilder
+    cultivation_builder: MagicStateCultivation
     observable_builder: ObservableBuilder
 
 
@@ -42,7 +49,7 @@ class Convention:
     """Represent a convention to implement blocks."""
 
     name: str
-    triplet: ConventionTriplet
+    builders: ConventionBuilders
 
     def __str__(self) -> str:
         return self.name  # pragma: no cover
@@ -54,9 +61,10 @@ def fixed_bulk_convention(
     """Create a fixed-bulk convention configured with a plaquette schedule."""
     return Convention(
         "fixed_bulk",
-        ConventionTriplet(
+        ConventionBuilders(
             FixedBulkCubeBuilder(schedule_family=schedule_family),
             FixedBulkPipeBuilder(schedule_family=schedule_family),
+            FixedBulkCultivationBuilder(schedule_family=schedule_family),
             FIXED_BULK_OBSERVABLE_BUILDER,
         ),
     )
@@ -65,9 +73,10 @@ def fixed_bulk_convention(
 FIXED_BULK_CONVENTION = fixed_bulk_convention()
 FIXED_BOUNDARY_CONVENTION = Convention(
     "fixed_boundary",
-    ConventionTriplet(
+    ConventionBuilders(
         FIXED_BOUNDARY_CUBE_BUILDER,
         FIXED_BOUNDARY_PIPE_BUILDER,
+        FIXED_BOUNDARY_CULTIVATION_BUILDER,
         FIXED_BOUNDARY_OBSERVABLE_BUILDER,
     ),
 )

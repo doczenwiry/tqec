@@ -413,10 +413,10 @@ class BlockGraph:
                 )
             return
 
-        # Y half cubes and conditional cubes are connected to exactly one pipe, whose
-        # direction is imposed by the cube kind (the time direction for Y half cubes,
+        # Y half cubes, conditional cubes and cultivation blocks are connected to exactly one pipe,
+        # whose direction is imposed by the cube kind (the time direction for Y half cubes,
         # the single axis along which the branches differ for conditional cubes).
-        if cube.is_y_cube or cube.is_conditional:
+        if cube.is_y_cube or cube.is_conditional or cube.is_cultivation_block:
             if len(pipes) != 1:
                 raise TQECError(
                     f"{cube.kind} at {cube.position} does not have exactly one pipe connected."

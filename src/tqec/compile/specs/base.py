@@ -173,3 +173,22 @@ class PipeSpec:
     pipe_kind: PipeKind
     has_spatial_up_or_down_pipe_in_timeslice: bool = False
     at_temporal_hadamard_layer: bool = False
+
+
+class MagicStateCultivation(Protocol):
+    ALLOCATION: int = 3
+    """Protocol for building a `CultivationBlock` based on a `CubeSpec`."""
+
+    def __call__(self, spec: CubeSpec, block_temporal_height: LinearFunction) -> list[Block]:
+        """Build the sequence of ``Block`` from a ``CubeSpec``.
+
+        Args:
+            spec: Specification of the cultivation block in the block graph.
+            block_temporal_height: the number of rounds of stabilizer measurements in one block
+            (ignoring one layer for initialization and another for final measurement).
+
+        Returns:
+            a list of ``Block`` based on the provided ``CubeSpec`` with.
+
+        """
+        ...

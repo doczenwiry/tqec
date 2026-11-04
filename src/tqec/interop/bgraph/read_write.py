@@ -3,9 +3,7 @@
 import re
 from pathlib import Path
 
-from tqec.compile.specs.library.generators.cultivation.magic_state_cultivation import (
-    MagicStateCultivationGenerator,
-)
+from tqec.compile.specs.base import MagicStateCultivation
 from tqec.computation.block_graph import BlockGraph
 from tqec.computation.cube import CultivationBlock, cube_kind_from_string
 from tqec.interop.shared import int_position_before_scale, scale_position
@@ -61,7 +59,7 @@ def read_bgraph(bgraph_str_or_path: str | Path, graph_name: str = "") -> BlockGr
             )
             if isinstance(cube_kind_from_string(kind), CultivationBlock):
                 position = position.shift_in_direction(
-                    Direction3D.Z, MagicStateCultivationGenerator.ALLOCATION - 1
+                    Direction3D.Z, MagicStateCultivation.ALLOCATION - 1
                 )
 
             # Store repositioned cube to facilitate pipe management later on

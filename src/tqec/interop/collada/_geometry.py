@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 from dataclasses import astuple, dataclass, field
 from typing import TYPE_CHECKING
 
@@ -146,9 +147,12 @@ class BlockGeometries:
 
     def _load_cultivation_block_d3_geometry(self) -> None:
         """Geometry for the Cultivation block: two columns for the cultivation stages."""
-        mx, px = (SignedDirection3D(Direction3D.X, False), SignedDirection3D(Direction3D.X, True))
-        my, py = (SignedDirection3D(Direction3D.Y, False), SignedDirection3D(Direction3D.Y, True))
-        mz, pz = (SignedDirection3D(Direction3D.Z, False), SignedDirection3D(Direction3D.Z, True))
+        mx, px, my, py, mz, pz = [
+            SignedDirection3D(direction, positive)
+            for direction, positive in itertools.product(
+                Direction3D.all_directions(), [False, True]
+            )
+        ]
 
         stable = 1.0 - 9.0 / 7.0
         expand = 0.5 - stable
