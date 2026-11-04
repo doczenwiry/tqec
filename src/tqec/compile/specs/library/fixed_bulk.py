@@ -17,6 +17,9 @@ from tqec.compile.specs.base import (
     PipeSpec,
 )
 from tqec.compile.specs.enums import SpatialArms
+from tqec.compile.specs.library.generators.cultivation.magic_state_cultivation import (
+    CultivationGenerator,
+)
 from tqec.compile.specs.library.generators.fixed_bulk import (
     FixedBulkConventionGenerator,
 )
@@ -445,22 +448,26 @@ class FixedBulkCultivationBuilder(MagicStateCultivation):
             compiler,
             schedule_family,
         )
+        self._cultivator = CultivationGenerator(self._memory_generator)
 
     @functools.cache
     def __call__(self, spec: CubeSpec, block_temporal_height: LinearFunction) -> list[Block]:
-        """Produce the blocks implementing a Cultivation block."""
+        """Produce the sequence of Block implementing a single attempt at cultivation."""
         assert isinstance(spec.kind, CultivationBlock)
 
-        x = spec.kind.get_basis_along(Direction3D.X)
-        orientation = Orientation.HORIZONTAL if x == Basis.Z else Orientation.VERTICAL
+        cultivation_blocks = self._cultivator.get_cultivation_blocks(spec, block_temporal_height)
+
+        orientation = spec.kind.get_orientation()
 
         template = cast(QubitTemplate, self._memory_generator.get_memory_qubit_raw_template())
         stabilizer = PlaquetteLayer(
             template, self._memory_generator.get_memory_qubit_plaquettes(orientation)
         )
-        memory = Block([stabilizer, RepeatedLayer(stabilizer, block_temporal_height), stabilizer])
+        cultivation_blocks.append(
+            Block([stabilizer, RepeatedLayer(stabilizer, block_temporal_height), stabilizer])
+        )
 
-        return [memory for _ in range(MagicStateCultivation.ALLOCATION)]
+        return cultivation_blocks
 
 
 FIXED_BULK_CUBE_BUILDER: CubeBuilder = FixedBulkCubeBuilder(IdentityPlaquetteCompiler)

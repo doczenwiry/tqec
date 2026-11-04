@@ -155,7 +155,7 @@ class BlockGeometries:
         ]
 
         stable = 1.0 - 9.0 / 7.0
-        expand = 0.5 - stable
+        expand = 0.0 - stable
         d5_top = (7.0 - 9.0 / 7.0) / 2
         d5_btm = stable - d5_top
         d3_top = 2 * d5_top
@@ -163,10 +163,10 @@ class BlockGeometries:
 
         face_specifications = [
             # Target Surface Code confirmed
-            (TQECColor.Y, 1.0, 0.5, mx, FloatPosition3D(0.0, 0.0, 0.5)),
-            (TQECColor.Y, 1.0, 0.5, px, FloatPosition3D(1.0, 0.0, 0.5)),
-            (TQECColor.Y, 0.5, 1.0, my, FloatPosition3D(0.0, 0.0, 0.5)),
-            (TQECColor.Y, 0.5, 1.0, py, FloatPosition3D(0.0, 1.0, 0.5)),
+            (TQECColor.Y, 1.0, 1.0, mx, FloatPosition3D(0.0, 0.0, 0.0)),
+            (TQECColor.Y, 1.0, 1.0, px, FloatPosition3D(1.0, 0.0, 0.0)),
+            (TQECColor.Y, 1.0, 1.0, my, FloatPosition3D(0.0, 0.0, 0.0)),
+            (TQECColor.Y, 1.0, 1.0, py, FloatPosition3D(0.0, 1.0, 0.0)),
             # Target Surface Code stabilization
             (TQECColor.CULTIVATION, 1.0, expand, mx, FloatPosition3D(0.0, 0.0, stable)),
             (TQECColor.CULTIVATION, 1.0, expand, px, FloatPosition3D(1.0, 0.0, stable)),

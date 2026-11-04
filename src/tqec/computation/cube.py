@@ -8,7 +8,7 @@ from functools import cached_property
 from typing import Any
 
 from tqec.computation.correlation import CorrelationSurface
-from tqec.utils.enums import Basis
+from tqec.utils.enums import Basis, Orientation
 from tqec.utils.exceptions import TQECError
 from tqec.utils.position import Direction3D, Position3D
 
@@ -235,6 +235,19 @@ class CultivationBlock(Enum):
         """
         assert direction != Direction3D.Z
         return Basis[self.value[direction.value]]
+
+    def get_orientation(self) -> Orientation:
+        """Get the orientation of the cultivation block.
+
+        Returns:
+            The orientation of the cultivation block w.r.t. the basis of the walls.
+
+        """
+        match self:
+            case CultivationBlock.ZXC:
+                return Orientation.HORIZONTAL
+            case CultivationBlock.XZC:
+                return Orientation.VERTICAL
 
 
 StaticCubeKind = ZXCube | LeafCubeKind

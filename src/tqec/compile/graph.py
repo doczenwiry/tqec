@@ -501,6 +501,10 @@ class TopologicalComputationGraph:
             A compiled stim circuit.
 
         """
+        if self.has_cultivation_blocks and k < 3:
+            extra = f"[k:{k}, d:{2 * k + 1}]"
+            raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
+
         circuit = self.to_layer_tree().generate_circuit(
             k,
             manhattan_radius=manhattan_radius,
@@ -547,6 +551,10 @@ class TopologicalComputationGraph:
             A compiled stim circuit.
 
         """
+        if self.has_cultivation_blocks and k < 3:
+            extra = f"[k:{k}, d:{2 * k + 1}]"
+            raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
+
         tree = self.to_layer_tree()
         circuit_iter: Iterator[stim.Circuit] = tree.generate_circuit_stream(
             k,
@@ -625,6 +633,10 @@ class TopologicalComputationGraph:
             a string representing the Crumble URL of the quantum circuit.
 
         """
+        if self.has_cultivation_blocks and k < 3:
+            extra = f"[k:{k}, d:{2 * k + 1}]"
+            raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
+
         return self.to_layer_tree().generate_crumble_url(  # pragma: no cover
             k, manhattan_radius, detector_database, add_polygons=add_polygons
         )

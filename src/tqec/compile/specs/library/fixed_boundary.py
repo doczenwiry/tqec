@@ -18,6 +18,9 @@ from tqec.compile.specs.base import (
     PipeSpec,
 )
 from tqec.compile.specs.enums import SpatialArms
+from tqec.compile.specs.library.generators.cultivation.magic_state_cultivation import (
+    CultivationGenerator,
+)
 from tqec.compile.specs.library.generators.fixed_boundary import FixedBoundaryConventionGenerator
 from tqec.compile.specs.library.generators.schedules import (
     DEFAULT_SCHEDULE_FAMILY,
@@ -424,30 +427,34 @@ class FixedBoundaryCultivationBuilder(MagicStateCultivation):
         translator: RPNGTranslator | None = None,
         schedule_family: PlaquetteScheduleFamily = DEFAULT_SCHEDULE_FAMILY,
     ):
-        """Implement the :class:`.CultivationBuilder` interface for the fixed bulk convention.
+        """Implement the :class:`.CultivationBuilder` interface for the fixed boundary convention.
 
         This class provides an implementation of Magic State Cultivation support compatible
-        with the fixed-bulk convention.
+        with the fixed-boundary convention.
         """
         self._memory_generator = FixedBoundaryConventionGenerator(
             translator or DefaultRPNGTranslator(schedule_family.measurement_schedule), compiler
         )
+        self._cultivator = CultivationGenerator(self._memory_generator)
 
     @functools.cache
     def __call__(self, spec: CubeSpec, block_temporal_height: LinearFunction) -> list[Block]:
-        """Produce the blocks implementing a Cultivation block."""
+        """Produce the sequence of Block implementing a single attempt at cultivation."""
         assert isinstance(spec.kind, CultivationBlock)
 
-        x = spec.kind.get_basis_along(Direction3D.X)
-        orientation = Orientation.HORIZONTAL if x == Basis.Z else Orientation.VERTICAL
+        cultivation_blocks = self._cultivator.get_cultivation_blocks(spec, block_temporal_height)
+
+        orientation = spec.kind.get_orientation()
 
         template = cast(QubitTemplate, self._memory_generator.get_memory_qubit_raw_template())
         stabilizer = PlaquetteLayer(
             template, self._memory_generator.get_memory_qubit_plaquettes(False, orientation)
         )
-        memory = Block([stabilizer, RepeatedLayer(stabilizer, block_temporal_height), stabilizer])
+        cultivation_blocks.append(
+            Block([stabilizer, RepeatedLayer(stabilizer, block_temporal_height), stabilizer])
+        )
 
-        return [memory for _ in range(MagicStateCultivation.ALLOCATION)]
+        return cultivation_blocks
 
 
 FIXED_BOUNDARY_CUBE_BUILDER = FixedBoundaryCubeBuilder(IdentityPlaquetteCompiler)
