@@ -66,6 +66,7 @@ from tqec.compile.blocks.positioning import (
 from tqec.compile.detectors.database import DetectorDatabase
 from tqec.compile.observables.abstract_observable import AbstractObservable
 from tqec.compile.observables.builder import ObservableBuilder
+from tqec.compile.specs.base import MagicStateCultivation
 from tqec.compile.tree.tree import LayerTree
 from tqec.templates.enums import TemplateBorder
 from tqec.utils.exceptions import TQECError
@@ -501,7 +502,7 @@ class TopologicalComputationGraph:
             A compiled stim circuit.
 
         """
-        if self.has_cultivation_blocks and k < 3:
+        if self.has_cultivation_blocks and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
             extra = f"[k:{k}, d:{2 * k + 1}]"
             raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
 
@@ -551,7 +552,7 @@ class TopologicalComputationGraph:
             A compiled stim circuit.
 
         """
-        if self.has_cultivation_blocks and k < 3:
+        if self.has_cultivation_blocks and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
             extra = f"[k:{k}, d:{2 * k + 1}]"
             raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
 
@@ -633,7 +634,7 @@ class TopologicalComputationGraph:
             a string representing the Crumble URL of the quantum circuit.
 
         """
-        if self.has_cultivation_blocks and k < 3:
+        if self.has_cultivation_blocks and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
             extra = f"[k:{k}, d:{2 * k + 1}]"
             raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
 

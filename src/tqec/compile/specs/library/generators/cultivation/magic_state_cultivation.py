@@ -16,6 +16,10 @@ from tqec.compile.specs.library.generators import (
     FixedBoundaryConventionGenerator,
     FixedBulkConventionGenerator,
 )
+from tqec.compile.specs.library.generators.cultivation.surface_code_expansion import (
+    SurfaceCodeExpansionLayer,
+)
+from tqec.compile.specs.library.generators.utils import PlaquetteMapper
 from tqec.computation.cube import CultivationBlock
 from tqec.plaquette import (
     FrozenDefaultDict,
@@ -26,6 +30,7 @@ from tqec.plaquette import (
 )
 from tqec.plaquette.debug import DrawPolygon, PlaquetteDebugInformation
 from tqec.plaquette.rpng import PauliBasis
+from tqec.templates.expansion import ExpansionDirection
 from tqec.templates.qubit import QubitTemplate
 from tqec.utils import Orientation
 from tqec.utils.scale import LinearFunction
@@ -46,15 +51,20 @@ class CultivationGenerator:
     __BLOCK_ONE_SLICES = 7
 
     def __init__(
-        self, generator: FixedBulkConventionGenerator | FixedBoundaryConventionGenerator
+        self,
+        generator: FixedBulkConventionGenerator | FixedBoundaryConventionGenerator,
+        mapper: PlaquetteMapper,
     ) -> None:
         """Contain the circuitry generation for an attempt of Magic State Cultivation.
 
         Args:
-            generator: Generator used to produce the memory rounds at the end of the cultivation.
+            generator: Generator used to produce the memory rounds at the end of the cultivation
+            mapper: PlaquetteMapper to be used
 
         """
         self._generator = generator
+        self._mapper = mapper
+        self._expander = SurfaceCodeExpansionLayer(generator, mapper)
 
     @staticmethod
     def __load_static_cultivation_circuit(orientation: Orientation) -> ScheduledCircuit:
@@ -91,7 +101,7 @@ class CultivationGenerator:
         ]
 
     def __empty_plaquette(self) -> Plaquette:
-        return self._generator._mapper.get_plaquette(RPNGDescription.empty())
+        return self._mapper.get_plaquette(RPNGDescription.empty())
 
     def __idling_layer(self, template: QubitTemplate) -> PlaquetteLayer:
         idle = Plaquette(
@@ -119,11 +129,11 @@ class CultivationGenerator:
         return PlaquetteLayer(template, plaquettes)
 
     def get_cultivation_blocks(self, spec: CubeSpec, height: LinearFunction) -> list[Block]:
-        """Obtain the blocks implementing a Magic State Cultivation.
-        n.b. The cultivation process requires at least 3 blocks and a target distance of at least 7.
+        """Obtain the sequence of Block implementing a Magic State Cultivation.
+        n.b. The cultivation process requires at least 3 Block and a target distance of at least 7.
 
         Returns:
-            a sequence of three Block representing a single attempt of the cultivation process.
+            a sequence of Block representing a single attempt of the cultivation process.
 
         """
         assert isinstance(spec.kind, CultivationBlock)
@@ -184,13 +194,15 @@ class CultivationGenerator:
         )
 
         # Prepare Cultivation Block #2
-        expander = self.__stabilizing_layer(template, orientation)
+        expansion = self._expander.get_plaquette_layer(
+            orientation=orientation, source_distance=5, direction=ExpansionDirection.LU
+        )
         stabilizer = self.__stabilizing_layer(template, orientation)
         stabilizing_layers = RepeatedLayer(stabilizer, height - len(static_layers_two))
         block_two = Block(
             [
                 static_layers_two[0],
-                SequencedLayers([*static_layers_two[1:], expander, stabilizing_layers]),
+                SequencedLayers([*static_layers_two[1:], expansion, stabilizing_layers]),
                 stabilizer,
             ]
         )

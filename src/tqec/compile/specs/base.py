@@ -176,7 +176,10 @@ class PipeSpec:
 
 
 class MagicStateCultivation(Protocol):
+    # The allocated number of cubes/blocks that a cultivation spans in time
     ALLOCATION: int = 3
+    # The minimal value of k required by the inplace cultivation when generating the stim circuit.
+    MINIMAL_K_REQUIRED: int = 3
     """Protocol for building a `CultivationBlock` based on a `CubeSpec`."""
 
     def __call__(self, spec: CubeSpec, block_temporal_height: LinearFunction) -> list[Block]:

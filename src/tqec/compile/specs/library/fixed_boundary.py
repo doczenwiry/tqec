@@ -26,6 +26,7 @@ from tqec.compile.specs.library.generators.schedules import (
     DEFAULT_SCHEDULE_FAMILY,
     PlaquetteScheduleFamily,
 )
+from tqec.compile.specs.library.generators.utils import PlaquetteMapper
 from tqec.computation.cube import ConditionalCubeKind, CultivationBlock, LeafCubeKind, ZXCube
 from tqec.plaquette.compilation.base import IdentityPlaquetteCompiler, PlaquetteCompiler
 from tqec.plaquette.plaquette import Plaquettes
@@ -435,7 +436,12 @@ class FixedBoundaryCultivationBuilder(MagicStateCultivation):
         self._memory_generator = FixedBoundaryConventionGenerator(
             translator or DefaultRPNGTranslator(schedule_family.measurement_schedule), compiler
         )
-        self._cultivator = CultivationGenerator(self._memory_generator)
+        self._cultivator = CultivationGenerator(
+            self._memory_generator,
+            PlaquetteMapper(
+                translator or DefaultRPNGTranslator(schedule_family.measurement_schedule)
+            ),
+        )
 
     @functools.cache
     def __call__(self, spec: CubeSpec, block_temporal_height: LinearFunction) -> list[Block]:
