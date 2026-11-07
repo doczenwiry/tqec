@@ -1,7 +1,6 @@
 """Defines templates representing the expansion of logical qubits."""
 
 from collections.abc import Sequence
-from enum import Enum
 
 import numpy
 from numpy import typing as npt
@@ -14,49 +13,22 @@ from tqec.utils import Orientation
 from tqec.utils.scale import LinearFunction, PlaquetteScalable2D
 
 
-class ExpansionDirection(Enum):
-    """Represents the possible directions of expansions."""
-
-    """Keys used are as follows:
-        - L/R stands for left/right
-        - U/D stands for upwards/downwards
-    """
-
-    LU = 0
-    RU = 1
-    RD = 2
-    LD = 3
-
-
 class ExpansionTemplate(QubitTemplate):
-    def __init__(
-        self, orientation: Orientation, source_distance: int, direction: ExpansionDirection
-    ):
+    def __init__(self, orientation: Orientation, source_distance: int):
         """Initialize an expansion layer template for growing a surface code patch.
 
         Args:
             orientation: the orientation of the source surface code patch
             source_distance: the code distance of the source surface code patch
-            direction: the expansion direction that will be used
 
         The source surface code patch will be grown into a target surface code patch by activating
-        additional plaquettes around two of its adjacent boundaries.
+        additional plaquettes around its left and upper boundaries.
 
         """
         super().__init__()
 
         self._orientation = orientation
         self._source_distance = source_distance
-        self._expansion_direction = direction
-
-    def _normalize_coordinates(self, target_distance: int, row: int, col: int) -> tuple[int, int]:
-        """Convert the row/col to reduce the expansion directions RU, RD, LD to the LU case."""
-        if self._expansion_direction in (ExpansionDirection.LD, ExpansionDirection.RD):
-            row = target_distance - row
-        if self._expansion_direction in (ExpansionDirection.RU, ExpansionDirection.RD):
-            col = target_distance - col
-
-        return row, col
 
     def _inside_source(self, target_distance: int, row: int, col: int) -> int:
         """Convert the row/col to describe its location w.r.t. the source patch.
@@ -132,12 +104,11 @@ class ExpansionTemplate(QubitTemplate):
 
         for row, col in numpy.ndindex(layout.shape):
             color = (row + col) % 2
+            coordinates = (col, row) if self._orientation == Orientation.VERTICAL else (row, col)
 
-            normalized = self._normalize_coordinates(target_distance, row, col)
-
-            source = self._inside_source(target_distance, *normalized)
-            boundary = self._along_boundary(target_distance, *normalized)
-            diagonal = (source != 2) * self._against_diagonal(*normalized)
+            source = self._inside_source(target_distance, *coordinates)
+            boundary = self._along_boundary(target_distance, *coordinates)
+            diagonal = (source != 2) * self._against_diagonal(*coordinates)
 
             index = (diagonal << 5) | (boundary << 3) | (source << 1) | color
 

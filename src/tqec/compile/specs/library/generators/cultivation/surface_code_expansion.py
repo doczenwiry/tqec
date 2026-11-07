@@ -14,7 +14,7 @@ from tqec.compile.specs.library.generators.utils import PlaquetteMapper
 from tqec.plaquette import RPNGDescription
 from tqec.plaquette.plaquette import Plaquettes
 from tqec.plaquette.rpng import ExtendedBasis
-from tqec.templates.expansion import ExpansionDirection, ExpansionTemplate
+from tqec.templates.expansion import ExpansionTemplate
 from tqec.templates.qubit import QubitTemplate
 from tqec.utils import TQECError
 from tqec.utils.enums import Basis, Orientation
@@ -35,33 +35,20 @@ class SurfaceCodeExpansionLayer(PlaquetteLayer):
 
     @staticmethod
     def _get_data_resets(
-        orientation: Orientation,
-        target_distance: int,
-        source_distance: int,
-        direction: ExpansionDirection,
+        orientation: Orientation, target_distance: int, source_distance: int
     ) -> npt.NDArray[numpy.object_]:
         """Compute the RESETs that occurs at every data qubits of the target code patch."""
-        upper = Basis.X if orientation == Orientation.HORIZONTAL else Basis.Z
         rows, cols = numpy.indices((target_distance, target_distance))
 
         # Prepare the RESETs for the LU case
-        resets = numpy.where(cols >= rows, upper, upper.flipped()).astype(object)
+        resets = numpy.where(cols >= rows, Basis.X, Basis.Z).astype(object)
         resets[target_distance - source_distance :, target_distance - source_distance :] = None
 
-        # Shift the RESETs around to bring the LU case to the RU, RD, LD expansion directions.
-        if direction in (ExpansionDirection.RD, ExpansionDirection.LD):
-            resets = resets[::-1, :]
-        if direction in (ExpansionDirection.RU, ExpansionDirection.RD):
-            resets = resets[:, ::-1]
-
-        return resets
+        return resets if orientation == Orientation.HORIZONTAL else resets.T
 
     @staticmethod
     def _get_plaquette_resets(
-        template: ExpansionTemplate,
-        orientation: Orientation,
-        source_distance: int,
-        direction: ExpansionDirection,
+        template: ExpansionTemplate, orientation: Orientation, source_distance: int
     ) -> dict[int, tuple[int, ResetKey]]:
         """Compute the RESETs that occurs for every plaquette of the target code patch."""
         resets: dict[int, tuple[int, ResetKey]] = {}
@@ -72,7 +59,7 @@ class SurfaceCodeExpansionLayer(PlaquetteLayer):
         expansion_indices = template.instantiate(k)
         plaquette_indices = QubitTemplate.instantiate(template, k)
         data_resets = SurfaceCodeExpansionLayer._get_data_resets(
-            orientation, target_distance, source_distance, direction
+            orientation, target_distance, source_distance
         )
         padded = numpy.pad(data_resets, 1, constant_values=None)
         for row, col in numpy.ndindex(expansion_indices.shape):
@@ -86,11 +73,9 @@ class SurfaceCodeExpansionLayer(PlaquetteLayer):
 
         return resets
 
-    def get_plaquette_layer(
-        self, orientation: Orientation, source_distance: int, direction: ExpansionDirection
-    ) -> PlaquetteLayer:
+    def get_plaquette_layer(self, orientation: Orientation, source_distance: int) -> PlaquetteLayer:
         """Construct a plaquette layer representing the surface code expansion."""
-        template = ExpansionTemplate(orientation, source_distance, direction)
+        template = ExpansionTemplate(orientation, source_distance)
 
         # Compute the RPNG descriptions for the plaquettes of the expansion layer.
         descriptions: dict[int, RPNGDescription] = {}
@@ -99,9 +84,7 @@ class SurfaceCodeExpansionLayer(PlaquetteLayer):
         else:
             memory = self._generator.get_memory_qubit_rpng_descriptions(False, orientation)
 
-        plaquette_resets = self._get_plaquette_resets(
-            template, orientation, source_distance, direction
-        )
+        plaquette_resets = self._get_plaquette_resets(template, orientation, source_distance)
 
         for label, (slot, resets) in plaquette_resets.items():
             description = memory[slot]

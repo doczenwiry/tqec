@@ -30,7 +30,6 @@ from tqec.plaquette import (
 )
 from tqec.plaquette.debug import DrawPolygon, PlaquetteDebugInformation
 from tqec.plaquette.rpng import PauliBasis
-from tqec.templates.expansion import ExpansionDirection
 from tqec.templates.qubit import QubitTemplate
 from tqec.utils import Orientation
 from tqec.utils.scale import LinearFunction
@@ -194,9 +193,7 @@ class CultivationGenerator:
         )
 
         # Prepare Cultivation Block #2
-        expansion = self._expander.get_plaquette_layer(
-            orientation=orientation, source_distance=5, direction=ExpansionDirection.LU
-        )
+        expansion = self._expander.get_plaquette_layer(orientation, 5)
         stabilizer = self.__stabilizing_layer(template, orientation)
         stabilizing_layers = RepeatedLayer(stabilizer, height - len(static_layers_two))
         block_two = Block(
