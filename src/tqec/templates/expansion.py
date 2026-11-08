@@ -9,8 +9,11 @@ from typing_extensions import override
 from tqec.templates.base import BorderIndices
 from tqec.templates.enums import TemplateBorder
 from tqec.templates.qubit import QubitTemplate
-from tqec.utils import Orientation
+from tqec.utils import Orientation, TQECError
+from tqec.utils.enums import Basis
 from tqec.utils.scale import LinearFunction, PlaquetteScalable2D
+
+ResetKey = tuple[Basis | None, Basis | None, Basis | None, Basis | None]
 
 
 class ExpansionTemplate(QubitTemplate):
@@ -64,8 +67,8 @@ class ExpansionTemplate(QubitTemplate):
 
         Returns:
             0 if the plaquette does not lie along any boundaries of the target patch
-            1 if the plaquette lies along a horizontal boundary of the target patch
-            2 if the plaquette lies along a vertical boundary of the target patch
+            1 if the plaquette lies along only the horizontal boundary of the target patch
+            2 if the plaquette lies along only the vertical boundary of the target patch
             3 if the plaquette lies along both boundaries of the target patch (i.e. corner)
 
         """
@@ -81,16 +84,16 @@ class ExpansionTemplate(QubitTemplate):
 
         Returns:
             0 if the plaquette lies strictly above the diagonal of the target patch
+            1 if the plaquette lies on or right below the diagonal of the target patch
+            2 if the plaquette lies strictly below those diagonals of the target patch
 
         """
-        diagonal = 0
-
-        if row in (col, col + 1):
-            diagonal += 1
-        elif row < col:
-            diagonal += 2
-
-        return diagonal
+        if row < col:
+            return 2
+        elif col <= row <= col + 1:
+            return 1
+        else:
+            return 0
 
     @override
     def instantiate(
@@ -133,3 +136,39 @@ class ExpansionTemplate(QubitTemplate):
     @override
     def get_border_indices(self, border: TemplateBorder) -> BorderIndices:
         raise NotImplementedError("Surface code expansion is not meant to be trimmed by pipes.")
+
+    def _get_data_resets(
+        self, orientation: Orientation, target_distance: int
+    ) -> npt.NDArray[numpy.object_]:
+        """Compute the RESETs that occurs at every data qubits of the target code patch."""
+        rows, cols = numpy.indices((target_distance, target_distance))
+
+        # Prepare the RESETs for the LU case
+        resets = numpy.where(cols >= rows, Basis.X, Basis.Z).astype(object)
+        resets[
+            target_distance - self._source_distance :, target_distance - self._source_distance :
+        ] = None
+
+        return resets if orientation == Orientation.HORIZONTAL else resets.T
+
+    def get_plaquette_resets(self, orientation: Orientation) -> dict[int, tuple[int, ResetKey]]:
+        """Compute the RESETs that occurs for every plaquette of the target code patch."""
+        resets: dict[int, tuple[int, ResetKey]] = {}
+
+        # The minimal value to get all plaquette indices that are used in the ExpansionTemplate.
+        k: int = 4
+        target_distance: int = 2 * k + 1
+        expansion_indices = self.instantiate(k)
+        plaquette_indices = QubitTemplate.instantiate(self, k)
+        data_resets = self._get_data_resets(orientation, target_distance)
+        padded = numpy.pad(data_resets, 1, constant_values=None)
+        for row, col in numpy.ndindex(expansion_indices.shape):
+            corners = tuple(padded[row : row + 2, col : col + 2].ravel())
+            kind = (int(plaquette_indices[row, col]), corners)
+            known = resets.setdefault(int(expansion_indices[row, col]), kind)
+            if known != kind:
+                raise TQECError(
+                    f"Label {expansion_indices[row, col]} stands for both {known} and {kind}."
+                )
+
+        return resets

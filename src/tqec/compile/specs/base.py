@@ -3,11 +3,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
+import stim
+
+from tqec.circuit.moment import Moment
+from tqec.circuit.qubit_map import QubitMap
+from tqec.circuit.schedule import ScheduledCircuit
 from tqec.compile.blocks.block import Block
 from tqec.compile.specs.enums import SpatialArms
 from tqec.computation.block_graph import BlockGraph
 from tqec.computation.cube import Cube, CubeKind, ZXCube
 from tqec.computation.pipe import PipeKind
+from tqec.plaquette import Plaquette, PlaquetteQubits
 from tqec.templates.base import RectangularTemplate
 from tqec.utils.exceptions import TQECError
 from tqec.utils.position import Direction3D
@@ -180,13 +186,13 @@ class MagicStateCultivation(Protocol):
     ALLOCATION: int = 3
     # The minimal value of k required by the inplace cultivation when generating the stim circuit.
     MINIMAL_K_REQUIRED: int = 3
-    """Protocol for building a `CultivationBlock` based on a `CubeSpec`."""
+    """Protocol for building `CultivationBlock` based on a `CubeSpec`."""
 
     def __call__(self, spec: CubeSpec, block_temporal_height: LinearFunction) -> list[Block]:
-        """Build the sequence of ``Block`` from a ``CubeSpec``.
+        """Produce the sequence of Block implementing a single attempt at cultivation.
 
         Args:
-            spec: Specification of the cultivation block in the block graph.
+            spec: Specification of the cultivation tower in the block graph.
             block_temporal_height: the number of rounds of stabilizer measurements in one block
             (ignoring one layer for initialization and another for final measurement).
 
@@ -195,3 +201,16 @@ class MagicStateCultivation(Protocol):
 
         """
         ...
+
+    @staticmethod
+    def idle_plaquette(schedule: int) -> Plaquette:
+        """Construct an idle plaquette to use as padding in the cultivation attempt."""
+        return Plaquette(
+            "IDLING_LAYER",
+            PlaquetteQubits([], []),
+            ScheduledCircuit(
+                [Moment(stim.Circuit("SHIFT_COORDS"))],
+                [schedule - 1],
+                QubitMap(),
+            ),
+        )

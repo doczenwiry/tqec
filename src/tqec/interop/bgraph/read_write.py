@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tqec.compile.specs.base import MagicStateCultivation
 from tqec.computation.block_graph import BlockGraph
-from tqec.computation.cube import CultivationBlock, cube_kind_from_string
+from tqec.computation.cube import CultivationTower, cube_kind_from_string
 from tqec.interop.shared import int_position_before_scale, scale_position
 from tqec.utils.exceptions import TQECError
 from tqec.utils.position import Direction3D, FloatPosition3D, Position3D
@@ -57,7 +57,7 @@ def read_bgraph(bgraph_str_or_path: str | Path, graph_name: str = "") -> BlockGr
             position = int_position_before_scale(
                 FloatPosition3D(int(x), int(y), int(z)), pipe_length
             )
-            if isinstance(cube_kind_from_string(kind), CultivationBlock):
+            if isinstance(cube_kind_from_string(kind), CultivationTower):
                 position = position.shift_in_direction(
                     Direction3D.Z, MagicStateCultivation.ALLOCATION - 1
                 )

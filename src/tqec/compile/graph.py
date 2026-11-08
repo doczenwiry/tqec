@@ -127,7 +127,7 @@ class TopologicalComputationGraph:
         self._scalable_qubit_shape: Final[PhysicalQubitScalable2D] = scalable_qubit_shape
         self._observables: list[AbstractObservable] | None = observables
         self._observable_builder = observable_builder
-        self.has_cultivation_blocks: bool = False
+        self.has_cultivation_towers: bool = False
 
     def add_cube(self, position: BlockPosition3D, block: Block) -> None:
         """Add a new cube at ``position`` implemented by the provided ``block``."""
@@ -502,7 +502,7 @@ class TopologicalComputationGraph:
             A compiled stim circuit.
 
         """
-        if self.has_cultivation_blocks and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
+        if self.has_cultivation_towers and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
             extra = f"[k:{k}, d:{2 * k + 1}]"
             raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
 
@@ -552,7 +552,7 @@ class TopologicalComputationGraph:
             A compiled stim circuit.
 
         """
-        if self.has_cultivation_blocks and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
+        if self.has_cultivation_towers and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
             extra = f"[k:{k}, d:{2 * k + 1}]"
             raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
 
@@ -634,7 +634,7 @@ class TopologicalComputationGraph:
             a string representing the Crumble URL of the quantum circuit.
 
         """
-        if self.has_cultivation_blocks and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
+        if self.has_cultivation_towers and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
             extra = f"[k:{k}, d:{2 * k + 1}]"
             raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
 

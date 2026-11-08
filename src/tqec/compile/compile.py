@@ -168,10 +168,12 @@ def compile_block_graph(
     for cube in block_graph.cubes:
         spec = cube_specs[cube]
         position = BlockPosition3D(cube.position.x, cube.position.y, cube.position.z)
-        if cube.is_cultivation_block:
-            graph.has_cultivation_blocks = True
-            cultivation_parts = convention.builders.cultivation_builder(spec, block_temporal_height)
-            for index, block in enumerate(cultivation_parts):
+        if cube.is_cultivation_tower:
+            graph.has_cultivation_towers = True
+            cultivation_blocks = convention.builders.cultivation_builder(
+                spec, block_temporal_height
+            )
+            for index, block in enumerate(cultivation_blocks):
                 offset = -(MagicStateCultivation.ALLOCATION - index - 1)
                 graph.add_cube(position.shift_in_direction(Direction3D.Z, offset), block)
         else:

@@ -197,8 +197,8 @@ class LeafCubeKind(Enum):
                 raise TQECError(f"Unknown leaf cube kind string representation: {string!r}.")
 
 
-class CultivationBlock(Enum):
-    """Block kinds that represent Magic State Cultivation in the block graph.
+class CultivationTower(Enum):
+    """Kinds that represent Magic State Cultivation in the block graph.
 
     Attributes:
         XZC: Cultivation where the X-boundary of type Pauli-X and Y-boundary of type Pauli.Z.
@@ -210,18 +210,18 @@ class CultivationBlock(Enum):
     ZXC = "ZXT"
 
     @staticmethod
-    def from_str(string: str) -> CultivationBlock:
+    def from_str(string: str) -> CultivationTower:
         """Create a cultivation block kind from the string representation.
 
         Args:
             string: The string representation of the cultivation cube kind.
 
         Returns:
-            The :py:class:`~tqec.computation.cube.CultivationCube` instance constructed
+            The :py:class:`~tqec.computation.cube.CultivationTower` instance constructed
             from the string representation.
 
         """
-        return CultivationBlock(value=string.upper())
+        return CultivationTower(value=string.upper())
 
     def get_basis_along(self, direction: Direction3D) -> Basis:
         """Get the basis of the walls along the given direction axis, excluding the Z-direction.
@@ -244,9 +244,9 @@ class CultivationBlock(Enum):
 
         """
         match self:
-            case CultivationBlock.ZXC:
+            case CultivationTower.ZXC:
                 return Orientation.HORIZONTAL
-            case CultivationBlock.XZC:
+            case CultivationTower.XZC:
                 return Orientation.VERTICAL
 
 
@@ -359,7 +359,7 @@ class ConditionalCubeKind:
         return ConditionalCubeKind((branches[0], branches[1]))
 
 
-CubeKind = ZXCube | LeafCubeKind | CultivationBlock | ConditionalCubeKind
+CubeKind = ZXCube | LeafCubeKind | CultivationTower | ConditionalCubeKind
 """All the possible kinds of cubes."""
 
 
@@ -370,8 +370,8 @@ def cube_kind_from_string(s: str) -> CubeKind:
         return ZXCube.from_str(s)
     if s in LeafCubeKind.__members__ or s in ["PORT", "P", "Y"]:
         return LeafCubeKind.from_str(s)
-    if s in {cb.value for cb in CultivationBlock}:
-        return CultivationBlock.from_str(s)
+    if s in {cb.value for cb in CultivationTower}:
+        return CultivationTower.from_str(s)
     if "_" in s:
         return ConditionalCubeKind.from_str(s)
     raise TQECError(f"Unknown cube kind string representation: {s!r}.")
@@ -461,9 +461,9 @@ class Cube:
         return self.kind is LeafCubeKind.Y_HALF_CUBE
 
     @property
-    def is_cultivation_block(self) -> bool:
+    def is_cultivation_tower(self) -> bool:
         """Verify whether the cube is of a cultivation kind."""
-        return isinstance(self.kind, CultivationBlock)
+        return isinstance(self.kind, CultivationTower)
 
     @property
     def is_spatial(self) -> bool:

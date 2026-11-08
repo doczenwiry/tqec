@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
-from tqec.computation.cube import CultivationBlock, LeafCubeKind, ZXCube
+from tqec.computation.cube import CultivationTower, LeafCubeKind, ZXCube
 from tqec.computation.pipe import PipeKind
 from tqec.interop.color import TQECColor
 from tqec.utils.enums import Basis
@@ -202,8 +202,8 @@ class BlockGeometries:
             transposed_position = FloatPosition3D(position.y, position.x, position.z)
             faces_xzc.append(Face(color, h, w, transposed_normal, transposed_position))
 
-        self.geometries[CultivationBlock.XZC] = faces_xzc
-        self.geometries[CultivationBlock.ZXC] = faces_zxc
+        self.geometries[CultivationTower.XZC] = faces_xzc
+        self.geometries[CultivationTower.ZXC] = faces_zxc
 
     def _load_pipe_without_hadamard_geometries(self) -> None:
         """Geometries for ozx, oxz, xoz, zox, xzo, zxo pipes."""

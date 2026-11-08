@@ -5,6 +5,7 @@ from typing import cast
 from typing_extensions import override
 
 from tqec.compile.blocks.block import Block
+from tqec.compile.blocks.cultivation.cultivation_block import CultivationBlock
 from tqec.compile.blocks.layers.atomic.base import BaseLayer
 from tqec.compile.blocks.layers.atomic.plaquettes import PlaquetteLayer
 from tqec.compile.blocks.layers.composed.base import BaseComposedLayer
@@ -17,8 +18,8 @@ from tqec.compile.specs.base import (
     PipeSpec,
 )
 from tqec.compile.specs.enums import SpatialArms
-from tqec.compile.specs.library.generators.cultivation.magic_state_cultivation import (
-    CultivationGenerator,
+from tqec.compile.specs.library.generators.cultivation.surface_code_expansion import (
+    SurfaceCodeExpansionLayer,
 )
 from tqec.compile.specs.library.generators.fixed_bulk import (
     FixedBulkConventionGenerator,
@@ -28,7 +29,8 @@ from tqec.compile.specs.library.generators.schedules import (
     PlaquetteScheduleFamily,
 )
 from tqec.compile.specs.library.generators.utils import PlaquetteMapper
-from tqec.computation.cube import ConditionalCubeKind, CultivationBlock, LeafCubeKind, ZXCube
+from tqec.computation.cube import ConditionalCubeKind, CultivationTower, LeafCubeKind, ZXCube
+from tqec.plaquette import FrozenDefaultDict, RPNGDescription
 from tqec.plaquette.compilation.base import IdentityPlaquetteCompiler, PlaquetteCompiler
 from tqec.plaquette.plaquette import Plaquettes
 from tqec.plaquette.rpng.translators.base import RPNGTranslator
@@ -111,8 +113,8 @@ class FixedBulkCubeBuilder(CubeBuilder):
             raise NotImplementedError("Y cube is not implemented.")
         elif isinstance(kind, ConditionalCubeKind):
             raise NotImplementedError("Conditional cube is not implemented.")
-        elif isinstance(kind, CultivationBlock):
-            raise NotImplementedError("Cultivation block is not implemented.")
+        elif isinstance(kind, CultivationTower):
+            raise NotImplementedError("Cultivation tower is not implemented.")
         # else
         template, (init, repeat, measure) = self._get_template_and_plaquettes(spec)
         layers: list[BaseLayer | BaseComposedLayer] = [
@@ -433,6 +435,8 @@ class FixedBulkPipeBuilder(PipeBuilder):
 
 
 class FixedBulkCultivationBuilder(MagicStateCultivation):
+    SCHEDULE: int = 7
+
     def __init__(
         self,
         compiler: PlaquetteCompiler = IdentityPlaquetteCompiler,
@@ -444,33 +448,58 @@ class FixedBulkCultivationBuilder(MagicStateCultivation):
         This class provides an implementation of Magic State Cultivation support compatible
         with the fixed-bulk convention.
         """
-        self._memory_generator = FixedBulkConventionGenerator(
+        self._generator: FixedBulkConventionGenerator = FixedBulkConventionGenerator(
             translator or DefaultRPNGTranslator(schedule_family.measurement_schedule),
             compiler,
             schedule_family,
         )
-        self._cultivator = CultivationGenerator(
-            self._memory_generator,
-            PlaquetteMapper(
-                translator or DefaultRPNGTranslator(schedule_family.measurement_schedule), compiler
+        self._mapper = PlaquetteMapper(
+            translator or DefaultRPNGTranslator(schedule_family.measurement_schedule), compiler
+        )
+
+        self._template = cast(QubitTemplate, self._generator.get_memory_qubit_raw_template())
+        self._empty_plaquette = self._mapper.get_plaquette(RPNGDescription.empty())
+        self._idling_layer = PlaquetteLayer(
+            self._template,
+            Plaquettes(
+                FrozenDefaultDict(
+                    {4: MagicStateCultivation.idle_plaquette(FixedBulkCultivationBuilder.SCHEDULE)},
+                    default_value=self._empty_plaquette,
+                )
             ),
         )
 
     @functools.cache
     def __call__(self, spec: CubeSpec, block_temporal_height: LinearFunction) -> list[Block]:
         """Produce the sequence of Block implementing a single attempt at cultivation."""
-        assert isinstance(spec.kind, CultivationBlock)
-
-        cultivation_blocks = self._cultivator.get_cultivation_blocks(spec, block_temporal_height)
+        assert isinstance(spec.kind, CultivationTower)
 
         orientation = spec.kind.get_orientation()
 
-        template = cast(QubitTemplate, self._memory_generator.get_memory_qubit_raw_template())
-        stabilizer = PlaquetteLayer(
-            template, self._memory_generator.get_memory_qubit_plaquettes(orientation)
+        stabilizing_layer = PlaquetteLayer(
+            self._template, self._generator.get_memory_qubit_plaquettes(orientation)
         )
+        expansion_layer = SurfaceCodeExpansionLayer(self._generator, self._mapper, orientation, 5)
+
+        cultivation_blocks = CultivationBlock.get_cultivation_blocks(
+            orientation,
+            block_temporal_height,
+            self._template,
+            empty=self._empty_plaquette,
+            idling_layer=self._idling_layer,
+            stabilizing_layer=stabilizing_layer,
+            expansion_layer=expansion_layer,
+            slice_size=FixedBulkCultivationBuilder.SCHEDULE,
+        )
+
         cultivation_blocks.append(
-            Block([stabilizer, RepeatedLayer(stabilizer, block_temporal_height), stabilizer])
+            Block(
+                [
+                    stabilizing_layer,
+                    RepeatedLayer(stabilizing_layer, block_temporal_height),
+                    stabilizing_layer,
+                ]
+            )
         )
 
         return cultivation_blocks
