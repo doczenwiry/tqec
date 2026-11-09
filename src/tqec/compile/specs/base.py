@@ -182,7 +182,7 @@ class MagicStateCultivation(Protocol):
     def __call__(
         self, spec: CubeSpec, block_temporal_height: LinearFunction
     ) -> list[CultivationBlock | Block]:
-        """Produce the blocks of one cultivation tower, bottom to top.
+        """Produce a list of blocks for one cultivation tower, bottom to top.
 
         Args:
             spec: Specification of the cultivation tower in the block graph.
@@ -191,7 +191,7 @@ class MagicStateCultivation(Protocol):
 
         Returns:
             a list of ``CultivationTower.height`` items: the two k-dependent ``CultivationBlock``
-            parts followed by the memory ``Block`` at the tower's own position.
+            parts followed by the expansion memory ``Block`` at the tower's own position.
 
         """
         ...

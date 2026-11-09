@@ -50,7 +50,9 @@ class CultivationBlock:
     # fmt: on
 
     MINIMAL_K_REQUIRED: int = 3
-    """Smallest k (target distance 2k + 1) for which the static circuit fits in 2 blocks."""
+    """Smallest k (target distance 2k + 1) for which the static circuit fits in 2 blocks.
+    Also required for the ExpansionTemplate which uses a source distance of 5 which requires
+    a strictly greater target distance."""
 
     def __init__(
         self,
@@ -58,7 +60,6 @@ class CultivationBlock:
         height: LinearFunction,
         layers: tuple[PlaquetteLayer, ...],
         idling: PlaquetteLayer,
-        expanding: PlaquetteLayer,
     ):
         """Initialize a CultivationBlock.
 
@@ -67,14 +68,12 @@ class CultivationBlock:
             height: will determine how the layers are placed across the Blocks when materialised
             layers: the layers of the static cultivation circuit sliced beforehand
             idling: a PlaquetteLayer representing idling that is used for padding
-            expanding: PlaquetteLayer representing the expansion of a surface code patch
 
         """
         self._part = part
         self._height = height
         self._layers = layers
         self._idling = idling
-        self._expanding = expanding
 
     @property
     def scalable_shape(self) -> PhysicalQubitScalable2D:
@@ -111,7 +110,6 @@ class CultivationBlock:
         schedule_size: int,
         template: QubitTemplate,
         empty: Plaquette,
-        expanding: PlaquetteLayer,
     ) -> tuple["CultivationBlock", "CultivationBlock"]:
         """Construct the pair of `CultivationBlock` that sit at the bottom of a `CultivationTower`.
 
@@ -125,7 +123,6 @@ class CultivationBlock:
             schedule_size: the number of moments in one round under the convention being used
             template: a QubitTemplate of the memory patch over which cultivation is performed
             empty: an empty plaquette
-            expanding: an PlaquetteLayer representing surface code expansion
 
         Returns:
             a tuple with the first and second `CultivationBlock` for a `CultivationTower`.
@@ -143,22 +140,17 @@ class CultivationBlock:
             template, CultivationBlock.__idle_plaquette(schedule_size), empty, slot
         )
 
-        block_one = CultivationBlock(
-            CultivationBlock.Part.ONE, height, static_layers, idling, expanding
-        )
+        block_one = CultivationBlock(CultivationBlock.Part.ONE, height, static_layers, idling)
 
-        block_two = CultivationBlock(
-            CultivationBlock.Part.TWO, height, static_layers, idling, expanding
-        )
+        block_two = CultivationBlock(CultivationBlock.Part.TWO, height, static_layers, idling)
 
         return block_one, block_two
 
     def materialise(self, k: int) -> Block:
         """Turn this `CultivationBlock` into a `Block` based on the scaling factor k.
 
-        The static circuit is sliced into one-round windows, followed by the expansion layer.
-        Those layers are packed at the top of the two lower `Block` of the cultivation tower,
-        so that it finishes exactly before the third `Block`.
+        The 11 layers of the static circuit are packed at the top of the lower two `Block`
+        with the expansion layer as the first layer of the third `Block`.
 
         Args:
             k: the main parameter dictating which layers are organized in the Block.
@@ -172,21 +164,20 @@ class CultivationBlock:
 
         """
         distance = 2 * k + 1
-        all_layers = (*self._layers, self._expanding)
 
-        if 2 * distance < len(all_layers):
+        if 2 * distance < len(self._layers):
             raise TQECError(
-                f"Cultivation needs {len(all_layers)} rounds but two blocks only hold "
+                f"Cultivation needs {len(self._layers)} rounds but two blocks only hold "
                 f"{2 * distance} at k={k}; use k >= {CultivationBlock.MINIMAL_K_REQUIRED}."
             )
 
-        split = max(0, len(all_layers) - distance)
+        split = max(0, len(self._layers) - distance)
 
         match self._part:
             case CultivationBlock.Part.ONE:
-                layers = all_layers[:split]
+                layers = self._layers[:split]
             case CultivationBlock.Part.TWO:
-                layers = all_layers[split:]
+                layers = self._layers[split:]
 
         idle_count: int = distance - len(layers)
         start = self._idling if idle_count > 0 else layers[0]

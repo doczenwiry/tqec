@@ -450,18 +450,21 @@ class FixedBoundaryCultivationBuilder(MagicStateCultivation):
     def __call__(
         self, spec: CubeSpec, block_temporal_height: LinearFunction
     ) -> list[CultivationBlock | Block]:
-        """Produce the sequence of Block implementing a single attempt at cultivation."""
+        """Produce a list of blocks for one cultivation tower, bottom to top.
+
+        Args:
+            spec: Specification of the cultivation tower in the block graph.
+            block_temporal_height: the number of rounds of stabilizer measurements in one block
+            (ignoring one layer for initialization and another for final measurement).
+
+        Returns:
+            a list of ``CultivationTower.height`` items: the two k-dependent ``CultivationBlock``
+            parts followed by the expansion memory ``Block`` at the tower's own position.
+
+        """
         assert isinstance(spec.kind, CultivationTower)
 
         orientation = spec.kind.get_orientation()
-
-        expanding_layer = SurfaceCodeExpansionLayer(
-            self._generator,
-            self._mapper,
-            orientation,
-            FixedBoundaryCultivationBuilder._MIRRORED_HORIZONTAL,
-            5,
-        )
 
         cultivation_block_one, cultivation_block_two = CultivationBlock.get_cultivation_blocks(
             orientation,
@@ -470,21 +473,27 @@ class FixedBoundaryCultivationBuilder(MagicStateCultivation):
             schedule_size=FixedBoundaryCultivationBuilder._SCHEDULE,
             template=self._template,
             empty=self._empty_plaquette,
-            expanding=expanding_layer,
         )
 
+        expanding_layer = SurfaceCodeExpansionLayer(
+            self._generator,
+            self._mapper,
+            orientation,
+            FixedBoundaryCultivationBuilder._MIRRORED_HORIZONTAL,
+            5,
+        )
         stabilizing_layer = PlaquetteLayer(
             self._template, self._generator.get_memory_qubit_plaquettes(False, orientation)
         )
-        memory_block = Block(
+        expansion_block = Block(
             [
-                stabilizing_layer,
+                expanding_layer,
                 RepeatedLayer(stabilizing_layer, block_temporal_height),
                 stabilizing_layer,
             ]
         )
 
-        return [cultivation_block_one, cultivation_block_two, memory_block]
+        return [cultivation_block_one, cultivation_block_two, expansion_block]
 
 
 FIXED_BOUNDARY_CUBE_BUILDER = FixedBoundaryCubeBuilder(IdentityPlaquetteCompiler)

@@ -104,11 +104,18 @@ class ExpansionTemplate(QubitTemplate):
     def instantiate(
         self, k: int, plaquette_indices: Sequence[int] | None = None
     ) -> npt.NDArray[numpy.int_]:
+        target_distance = 2 * k + 1
+
+        if target_distance <= self._source_distance:
+            raise TQECError(
+                f"Expanding a distance-{self._source_distance} patch requires a strictly "
+                f"larger target distance, got {target_distance} (k={k})."
+            )
+
         if plaquette_indices is None:
             plaquette_indices = [i + 1 for i in range(self.expected_plaquettes_number)]
 
         layout = numpy.zeros(self.shape(k).to_numpy_shape(), dtype=numpy.int_)
-        target_distance = 2 * k + 1
 
         for row, col in numpy.ndindex(layout.shape):
             color = (row + col) % 2
