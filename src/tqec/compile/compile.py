@@ -169,7 +169,6 @@ def compile_block_graph(
         spec = cube_specs[cube]
         position = BlockPosition3D(cube.position.x, cube.position.y, cube.position.z)
         if isinstance(spec.kind, CultivationTower):
-            graph.has_cultivation_towers = True
             cultivation_blocks = convention.builders.cultivation_builder(
                 spec, block_temporal_height
             )

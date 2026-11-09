@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Literal, Protocol
 
 from tqec.compile.blocks.block import Block
+from tqec.compile.blocks.cultivation.cultivation_block import CultivationBlock
 from tqec.compile.specs.enums import SpatialArms
 from tqec.computation.block_graph import BlockGraph
 from tqec.computation.cube import Cube, CubeKind, ZXCube
@@ -178,8 +179,10 @@ class PipeSpec:
 class MagicStateCultivation(Protocol):
     """Protocol for building sequence of `Block` for a `CultivationTower` from its `CubeSpec`."""
 
-    def __call__(self, spec: CubeSpec, block_temporal_height: LinearFunction) -> list[Block]:
-        """Produce the sequence of Block implementing a single attempt at cultivation.
+    def __call__(
+        self, spec: CubeSpec, block_temporal_height: LinearFunction
+    ) -> list[CultivationBlock | Block]:
+        """Produce the blocks of one cultivation tower, bottom to top.
 
         Args:
             spec: Specification of the cultivation tower in the block graph.
@@ -187,7 +190,8 @@ class MagicStateCultivation(Protocol):
             (ignoring one layer for initialization and another for final measurement).
 
         Returns:
-            a list of ``Block`` based on the provided ``CubeSpec`` with.
+            a list of ``CultivationTower.height`` items: the two k-dependent ``CultivationBlock``
+            parts followed by the memory ``Block`` at the tower's own position.
 
         """
         ...

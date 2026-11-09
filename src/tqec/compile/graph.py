@@ -117,7 +117,7 @@ class TopologicalComputationGraph:
         observables: list[AbstractObservable] | None = None,
     ) -> None:
         """Represent a topological computation with :class:`.Block` instances."""
-        self._blocks: dict[LayoutPosition3D, Block] = {}
+        self._blocks: dict[LayoutPosition3D, Block | CultivationBlock] = {}
         # For fixed-bulk convention, temporal Hadamard pipe has its on space-time
         # extent. We need to keep track of the temporal pipes that are at the
         # same layer of at least one temporal Hadamard pipe.
@@ -127,11 +127,10 @@ class TopologicalComputationGraph:
         self._scalable_qubit_shape: Final[PhysicalQubitScalable2D] = scalable_qubit_shape
         self._observables: list[AbstractObservable] | None = observables
         self._observable_builder = observable_builder
-        self.has_cultivation_towers: bool = False
 
-    def add_cube(self, position: BlockPosition3D, block: Block) -> None:
+    def add_cube(self, position: BlockPosition3D, block: Block | CultivationBlock) -> None:
         """Add a new cube at ``position`` implemented by the provided ``block``."""
-        if not block.is_cube:
+        if isinstance(block, Block) and not block.is_cube:
             raise TQECError(
                 f"Cannot add the block as a cube. The provided block({block}) "
                 "has at least one non-scalable dimension."
@@ -144,6 +143,11 @@ class TopologicalComputationGraph:
                 f"an entry at {layout_position}."
             )
         self._blocks[layout_position] = block
+
+    def _get_block(self, layout_position: LayoutPosition3D) -> Block:
+        block = self._blocks[layout_position]
+        assert isinstance(block, Block)
+        return block
 
     def get_cube(self, position: BlockPosition3D) -> Block:
         """Recover the :class:`.Block` instance at the provided ``position``.
@@ -159,7 +163,7 @@ class TopologicalComputationGraph:
 
         """
         layout_position = LayoutPosition3D.from_block_position(position)
-        return self._blocks[layout_position]
+        return self._get_block(layout_position)
 
     def _check_any_pipe(self, source: BlockPosition3D, sink: BlockPosition3D) -> None:
         """Check the validity of a pipe between ``source`` and ``sink``.
@@ -224,7 +228,7 @@ class TopologicalComputationGraph:
                 f"There is already a pipe at {layout_position}."
             )
 
-    def _check_block_spatial_shape(self, block: Block) -> None:
+    def _check_block_spatial_shape(self, block: Block | CultivationBlock) -> None:
         if block.scalable_shape != self._scalable_qubit_shape:
             raise TQECError(
                 f"Expected a block shaped like a logical qubit "
@@ -267,8 +271,10 @@ class TopologicalComputationGraph:
         sink_border = border_from_signed_direction(SignedDirection3D(juncdir, False))
         assert isinstance(source_border, SpatialBlockBorder)
         assert isinstance(sink_border, SpatialBlockBorder)
-        self._blocks[psource] = self._blocks[psource].with_spatial_borders_trimmed([source_border])
-        self._blocks[psink] = self._blocks[psink].with_spatial_borders_trimmed([sink_border])
+        self._blocks[psource] = self._get_block(psource).with_spatial_borders_trimmed(
+            [source_border]
+        )
+        self._blocks[psink] = self._get_block(psink).with_spatial_borders_trimmed([sink_border])
 
     def _substitute_part_of_spatial_pipe(
         self,
@@ -296,7 +302,7 @@ class TopologicalComputationGraph:
                 substituted is not an instance of ``PlaquetteLayer``.
 
         """
-        pipe_block = self._blocks[pipe_pos]
+        pipe_block = self._get_block(pipe_pos)
         pipe_layer_to_replace = pipe_block.get_temporal_layer_on_border(temporal_pipe_border)
         if not isinstance(pipe_layer_to_replace, PlaquetteLayer):
             raise NotImplementedError(
@@ -326,7 +332,7 @@ class TopologicalComputationGraph:
         layer: BaseLayer,
     ) -> None:
         pblock = LayoutPosition3D.from_block_position(block_pos)
-        block = self._blocks[pblock]
+        block = self._get_block(pblock)
 
         # First replace the layer on the temporal border of the block.
         layer_on_top_of_block = layer
@@ -419,7 +425,16 @@ class TopologicalComputationGraph:
             key = LayoutPosition3D.from_pipe_position((source, sink))
             self._blocks[key] = block
 
-    def to_layer_tree(self) -> LayerTree:
+    @staticmethod
+    def _materialise(block: Block | CultivationBlock, k: int | None) -> Block:
+        if isinstance(block, Block):
+            return block
+        else:  # isinstance(block, CultivationBlock)
+            if k is None:
+                raise TQECError("A value of k is required to generate cultivation blocks.")
+            return block.materialise(k)
+
+    def to_layer_tree(self, k: int | None = None) -> LayerTree:
         """Merge layers happening in parallel at each time step.
 
         This method considers all the layers contained in added blocks (cubes and
@@ -428,6 +443,10 @@ class TopologicalComputationGraph:
         :class:`~tqec.compile.blocks.layers.composed.base.BaseComposedLayer`
         wrapping :class:`~tqec.compile.blocks.layers.atomic.layout.LayoutLayer`
         instances.
+
+        Args:
+            k : used to turn any CultivationBlock into Block with an appropriate arrangement
+                of the cultivation layers.
 
         Returns:
             A tree representing the topological computation.
@@ -448,7 +467,7 @@ class TopologicalComputationGraph:
             {} for _ in range(min_z, max_z + 1)
         ]
         for pos, block in self._blocks.items():
-            blocks_by_z[pos.z - min_z][pos.as_2d()] = block
+            blocks_by_z[pos.z - min_z][pos.as_2d()] = self._materialise(block, k)
         for pos, pipe in self._temporal_pipes_at_hadamard_layer.items():
             temporal_pipes_by_z[pos.z - min_z][pos.as_2d()] = pipe
         return LayerTree(
@@ -502,11 +521,7 @@ class TopologicalComputationGraph:
             A compiled stim circuit.
 
         """
-        if self.has_cultivation_towers and k < CultivationBlock.MINIMAL_K_REQUIRED:
-            extra = f"[k:{k}, d:{2 * k + 1}]"
-            raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
-
-        circuit = self.to_layer_tree().generate_circuit(
+        circuit = self.to_layer_tree(k).generate_circuit(
             k,
             manhattan_radius=manhattan_radius,
             detector_database=detector_database,
@@ -552,11 +567,7 @@ class TopologicalComputationGraph:
             A compiled stim circuit.
 
         """
-        if self.has_cultivation_towers and k < CultivationBlock.MINIMAL_K_REQUIRED:
-            extra = f"[k:{k}, d:{2 * k + 1}]"
-            raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
-
-        tree = self.to_layer_tree()
+        tree = self.to_layer_tree(k)
         circuit_iter: Iterator[stim.Circuit] = tree.generate_circuit_stream(
             k,
             manhattan_radius=manhattan_radius,
@@ -634,10 +645,6 @@ class TopologicalComputationGraph:
             a string representing the Crumble URL of the quantum circuit.
 
         """
-        if self.has_cultivation_towers and k < CultivationBlock.MINIMAL_K_REQUIRED:
-            extra = f"[k:{k}, d:{2 * k + 1}]"
-            raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
-
-        return self.to_layer_tree().generate_crumble_url(  # pragma: no cover
+        return self.to_layer_tree(k).generate_crumble_url(  # pragma: no cover
             k, manhattan_radius, detector_database, add_polygons=add_polygons
         )
