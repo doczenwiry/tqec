@@ -13,10 +13,10 @@ from tqec.compile.observables.abstract_observable import (
     AbstractObservable,
     compile_correlation_surface_to_abstract_observable,
 )
-from tqec.compile.specs.base import CubeSpec, MagicStateCultivation, PipeSpec
+from tqec.compile.specs.base import CubeSpec, PipeSpec
 from tqec.computation.block_graph import BlockGraph
 from tqec.computation.correlation import CorrelationSurface
-from tqec.computation.cube import Cube
+from tqec.computation.cube import Cube, CultivationTower
 from tqec.templates.base import RectangularTemplate
 from tqec.utils.exceptions import TQECError
 from tqec.utils.position import BlockPosition3D, Direction3D
@@ -168,13 +168,18 @@ def compile_block_graph(
     for cube in block_graph.cubes:
         spec = cube_specs[cube]
         position = BlockPosition3D(cube.position.x, cube.position.y, cube.position.z)
-        if cube.is_cultivation_tower:
+        if isinstance(spec.kind, CultivationTower):
             graph.has_cultivation_towers = True
             cultivation_blocks = convention.builders.cultivation_builder(
                 spec, block_temporal_height
             )
+            if len(cultivation_blocks) != spec.kind.height:
+                raise TQECError(
+                    f"Cultivation builder produced {len(cultivation_blocks)} blocks, "
+                    f"expected {spec.kind.height}."
+                )
             for index, block in enumerate(cultivation_blocks):
-                offset = -(MagicStateCultivation.ALLOCATION - index - 1)
+                offset = -(spec.kind.height - index - 1)
                 graph.add_cube(position.shift_in_direction(Direction3D.Z, offset), block)
         else:
             graph.add_cube(position, convention.builders.cube_builder(spec, block_temporal_height))

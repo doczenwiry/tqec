@@ -19,6 +19,7 @@ from tqec.computation.cube import (
     ConditionalCubeKind,
     Cube,
     CubeKind,
+    CultivationTower,
     LeafCubeKind,
     ZXCube,
     cube_kind_from_string,
@@ -392,6 +393,8 @@ class BlockGraph:
           color orientation.
         - **Match color at turn:** two pipes in a "turn" should have the matching colors on
           faces that are touching.
+        - **Cultivation tower footprint:** the positions below the top of a cultivation tower
+          must be free.
 
         Raises:
             TQECError: If the above conditions are not satisfied.
@@ -417,6 +420,8 @@ class BlockGraph:
         # whose direction is imposed by the cube kind (the time direction for Y half cubes,
         # the single axis along which the branches differ for conditional cubes).
         if cube.is_y_cube or cube.is_conditional or cube.is_cultivation_tower:
+            if cube.is_cultivation_tower:
+                self._validate_cultivation_tower_footprint(cube)
             if len(pipes) != 1:
                 raise TQECError(
                     f"{cube.kind} at {cube.position} does not have exactly one pipe connected."
@@ -457,6 +462,22 @@ class BlockGraph:
                     pipe_color = pipe.kind.get_basis_along(direction, pipe.at_head(cube.position))
                     if pipe_color != cube_color:
                         raise TQECError(f"Cube {cube} has mismatched colors with pipe {pipe}.")
+
+    def _validate_cultivation_tower_footprint(self, cube: Cube) -> None:
+        """Check that the (height-1) positions below a `CultivationTower` are free.
+
+        A `CultivationTower` is placed at its own position but spans CultivationTower.height cubes.
+        """
+        if not isinstance(cube.kind, CultivationTower):
+            return
+
+        for depth in range(1, cube.kind.height):
+            below = cube.position.shift_in_direction(Direction3D.Z, -depth)
+            if below in self:
+                raise TQECError(
+                    f"{cube.kind} at {cube.position} spans {cube.kind.height} blocks, "
+                    f"but the slot at {below} is occupied by {self[below].kind}."
+                )
 
     def _validate_conditional_branch_walls(self, cube: Cube, pipe: Pipe) -> None:
         """Check that the walls of every ZX branch of a conditional cube match the pipe walls."""

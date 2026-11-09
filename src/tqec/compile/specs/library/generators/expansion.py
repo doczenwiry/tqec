@@ -20,22 +20,31 @@ class SurfaceCodeExpansionLayer(PlaquetteLayer):
         generator: FixedBulkConventionGenerator | FixedBoundaryConventionGenerator,
         mapper: PlaquetteMapper,
         orientation: Orientation,
+        mirrored_horizontal: bool,
         source_distance: int,
     ):
-        """Construct a plaquette layer representing the surface code expansion."""
-        self._generator = generator
-        self._mapper = mapper
+        """Construct a plaquette layer representing the surface code expansion.
 
-        template = ExpansionTemplate(orientation, source_distance)
+        Args:
+            generator: ConventionGenerator to be used
+            mapper: PlaquetteMapper to be used
+            orientation: the orientation of the surface code patches
+            mirrored_horizontal: whether HORIZONTAL surface code patches are mirrored (x -> -x),
+                placing the cultivation in the bottom-left corner instead of the bottom-right.
+                Ignored for VERTICAL patches, which are transposed instead.
+            source_distance: the code distance of the source surface code patch
+
+        """
+        template = ExpansionTemplate(orientation, mirrored_horizontal, source_distance)
 
         # Compute the RPNG descriptions for the plaquettes of the expansion layer.
         descriptions: dict[int, RPNGDescription] = {}
-        if isinstance(self._generator, FixedBulkConventionGenerator):
-            memory = self._generator.get_memory_qubit_rpng_descriptions(orientation)
+        if isinstance(generator, FixedBulkConventionGenerator):
+            memory = generator.get_memory_qubit_rpng_descriptions(orientation)
         else:
-            memory = self._generator.get_memory_qubit_rpng_descriptions(False, orientation)
+            memory = generator.get_memory_qubit_rpng_descriptions(False, orientation)
 
-        plaquette_resets = template.get_plaquette_resets(orientation)
+        plaquette_resets = template.get_plaquette_resets()
 
         for label, (slot, resets) in plaquette_resets.items():
             description = memory[slot]
@@ -48,6 +57,4 @@ class SurfaceCodeExpansionLayer(PlaquetteLayer):
             descriptions[label] = replace(description, corners=corners)
         rpng_descriptions = FrozenDefaultDict(descriptions, default_value=RPNGDescription.empty())
 
-        super().__init__(
-            template, Plaquettes(rpng_descriptions.map_values(self._mapper.get_plaquette))
-        )
+        super().__init__(template, Plaquettes(rpng_descriptions.map_values(mapper.get_plaquette)))

@@ -209,6 +209,11 @@ class CultivationTower(Enum):
     XZC = "XZT"
     ZXC = "ZXT"
 
+    @property
+    def height(self) -> int:
+        """Number of consecutive cubes in time this tower occupies, ending at its own position."""
+        return 3
+
     @staticmethod
     def from_str(string: str) -> CultivationTower:
         """Create a cultivation block kind from the string representation.

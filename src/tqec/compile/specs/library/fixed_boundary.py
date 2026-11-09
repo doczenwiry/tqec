@@ -19,9 +19,7 @@ from tqec.compile.specs.base import (
     PipeSpec,
 )
 from tqec.compile.specs.enums import SpatialArms
-from tqec.compile.specs.library.generators.cultivation.surface_code_expansion import (
-    SurfaceCodeExpansionLayer,
-)
+from tqec.compile.specs.library.generators.expansion import SurfaceCodeExpansionLayer
 from tqec.compile.specs.library.generators.fixed_boundary import FixedBoundaryConventionGenerator
 from tqec.compile.specs.library.generators.schedules import (
     DEFAULT_SCHEDULE_FAMILY,
@@ -29,7 +27,7 @@ from tqec.compile.specs.library.generators.schedules import (
 )
 from tqec.compile.specs.library.generators.utils import PlaquetteMapper
 from tqec.computation.cube import ConditionalCubeKind, CultivationTower, LeafCubeKind, ZXCube
-from tqec.plaquette import FrozenDefaultDict, RPNGDescription
+from tqec.plaquette import RPNGDescription
 from tqec.plaquette.compilation.base import IdentityPlaquetteCompiler, PlaquetteCompiler
 from tqec.plaquette.plaquette import Plaquettes
 from tqec.plaquette.rpng.translators.base import RPNGTranslator
@@ -424,7 +422,8 @@ class FixedBoundaryPipeBuilder(PipeBuilder):
 
 
 class FixedBoundaryCultivationBuilder(MagicStateCultivation):
-    SCHEDULE: int = 7
+    _SCHEDULE: int = 7
+    _MIRRORED_HORIZONTAL: bool = True
 
     def __init__(
         self,
@@ -446,19 +445,6 @@ class FixedBoundaryCultivationBuilder(MagicStateCultivation):
 
         self._template = cast(QubitTemplate, self._generator.get_memory_qubit_raw_template())
         self._empty_plaquette = self._mapper.get_plaquette(RPNGDescription.empty())
-        self._idling_layer = PlaquetteLayer(
-            self._template,
-            Plaquettes(
-                FrozenDefaultDict(
-                    {
-                        4: MagicStateCultivation.idle_plaquette(
-                            FixedBoundaryCultivationBuilder.SCHEDULE
-                        )
-                    },
-                    default_value=self._empty_plaquette,
-                )
-            ),
-        )
 
     @functools.cache
     def __call__(self, spec: CubeSpec, block_temporal_height: LinearFunction) -> list[Block]:
@@ -470,17 +456,23 @@ class FixedBoundaryCultivationBuilder(MagicStateCultivation):
         stabilizing_layer = PlaquetteLayer(
             self._template, self._generator.get_memory_qubit_plaquettes(False, orientation)
         )
-        expansion_layer = SurfaceCodeExpansionLayer(self._generator, self._mapper, orientation, 5)
+        expanding_layer = SurfaceCodeExpansionLayer(
+            self._generator,
+            self._mapper,
+            orientation,
+            FixedBoundaryCultivationBuilder._MIRRORED_HORIZONTAL,
+            5,
+        )
 
         cultivation_blocks = CultivationBlock.get_cultivation_blocks(
             orientation,
-            block_temporal_height,
-            self._template,
+            height=block_temporal_height,
+            mirrored_horizontal=FixedBoundaryCultivationBuilder._MIRRORED_HORIZONTAL,
+            schedule=FixedBoundaryCultivationBuilder._SCHEDULE,
+            template=self._template,
             empty=self._empty_plaquette,
-            idling_layer=self._idling_layer,
-            stabilizing_layer=stabilizing_layer,
-            expansion_layer=expansion_layer,
-            slice_size=FixedBoundaryCultivationBuilder.SCHEDULE,
+            stabilizing=stabilizing_layer,
+            expanding=expanding_layer,
         )
 
         cultivation_blocks.append(

@@ -17,11 +17,14 @@ ResetKey = tuple[Basis | None, Basis | None, Basis | None, Basis | None]
 
 
 class ExpansionTemplate(QubitTemplate):
-    def __init__(self, orientation: Orientation, source_distance: int):
+    def __init__(self, orientation: Orientation, mirrored_horizontal: bool, source_distance: int):
         """Initialize an expansion layer template for growing a surface code patch.
 
         Args:
             orientation: the orientation of the source surface code patch
+            mirrored_horizontal: whether HORIZONTAL surface code patches are mirrored (x -> -x),
+                placing the cultivation in the bottom-left corner instead of the bottom-right.
+                Ignored for VERTICAL patches, which are transposed instead.
             source_distance: the code distance of the source surface code patch
 
         The source surface code patch will be grown into a target surface code patch by activating
@@ -31,6 +34,8 @@ class ExpansionTemplate(QubitTemplate):
         super().__init__()
 
         self._orientation = orientation
+        # Mirroring only applies to HORIZONTAL patches; VERTICAL ones are transposed instead.
+        self._mirrored = mirrored_horizontal and orientation == Orientation.HORIZONTAL
         self._source_distance = source_distance
 
     def _inside_source(self, target_distance: int, row: int, col: int) -> int:
@@ -107,7 +112,13 @@ class ExpansionTemplate(QubitTemplate):
 
         for row, col in numpy.ndindex(layout.shape):
             color = (row + col) % 2
-            coordinates = (col, row) if self._orientation == Orientation.VERTICAL else (row, col)
+
+            if self._orientation == Orientation.VERTICAL:
+                coordinates = (col, row)
+            elif self._mirrored:
+                coordinates = (row, target_distance - col)
+            else:
+                coordinates = (row, col)
 
             source = self._inside_source(target_distance, *coordinates)
             boundary = self._along_boundary(target_distance, *coordinates)
@@ -137,9 +148,7 @@ class ExpansionTemplate(QubitTemplate):
     def get_border_indices(self, border: TemplateBorder) -> BorderIndices:
         raise NotImplementedError("Surface code expansion is not meant to be trimmed by pipes.")
 
-    def _get_data_resets(
-        self, orientation: Orientation, target_distance: int
-    ) -> npt.NDArray[numpy.object_]:
+    def _get_data_resets(self, target_distance: int) -> npt.NDArray[numpy.object_]:
         """Compute the RESETs that occurs at every data qubits of the target code patch."""
         rows, cols = numpy.indices((target_distance, target_distance))
 
@@ -149,9 +158,12 @@ class ExpansionTemplate(QubitTemplate):
             target_distance - self._source_distance :, target_distance - self._source_distance :
         ] = None
 
-        return resets if orientation == Orientation.HORIZONTAL else resets.T
+        if self._orientation == Orientation.VERTICAL:
+            return resets.T
+        else:
+            return resets[:, ::-1] if self._mirrored else resets
 
-    def get_plaquette_resets(self, orientation: Orientation) -> dict[int, tuple[int, ResetKey]]:
+    def get_plaquette_resets(self) -> dict[int, tuple[int, ResetKey]]:
         """Compute the RESETs that occurs for every plaquette of the target code patch."""
         resets: dict[int, tuple[int, ResetKey]] = {}
 
@@ -160,7 +172,7 @@ class ExpansionTemplate(QubitTemplate):
         target_distance: int = 2 * k + 1
         expansion_indices = self.instantiate(k)
         plaquette_indices = QubitTemplate.instantiate(self, k)
-        data_resets = self._get_data_resets(orientation, target_distance)
+        data_resets = self._get_data_resets(target_distance)
         padded = numpy.pad(data_resets, 1, constant_values=None)
         for row, col in numpy.ndindex(expansion_indices.shape):
             corners = tuple(padded[row : row + 2, col : col + 2].ravel())

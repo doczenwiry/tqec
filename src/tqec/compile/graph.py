@@ -50,6 +50,7 @@ from typing import Final
 import stim
 
 from tqec.compile.blocks.block import Block, merge_parallel_block_layers
+from tqec.compile.blocks.cultivation.cultivation_block import CultivationBlock
 from tqec.compile.blocks.enums import (
     SpatialBlockBorder,
     TemporalBlockBorder,
@@ -66,7 +67,6 @@ from tqec.compile.blocks.positioning import (
 from tqec.compile.detectors.database import DetectorDatabase
 from tqec.compile.observables.abstract_observable import AbstractObservable
 from tqec.compile.observables.builder import ObservableBuilder
-from tqec.compile.specs.base import MagicStateCultivation
 from tqec.compile.tree.tree import LayerTree
 from tqec.templates.enums import TemplateBorder
 from tqec.utils.exceptions import TQECError
@@ -502,7 +502,7 @@ class TopologicalComputationGraph:
             A compiled stim circuit.
 
         """
-        if self.has_cultivation_towers and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
+        if self.has_cultivation_towers and k < CultivationBlock.MINIMAL_K_REQUIRED:
             extra = f"[k:{k}, d:{2 * k + 1}]"
             raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
 
@@ -552,7 +552,7 @@ class TopologicalComputationGraph:
             A compiled stim circuit.
 
         """
-        if self.has_cultivation_towers and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
+        if self.has_cultivation_towers and k < CultivationBlock.MINIMAL_K_REQUIRED:
             extra = f"[k:{k}, d:{2 * k + 1}]"
             raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
 
@@ -634,7 +634,7 @@ class TopologicalComputationGraph:
             a string representing the Crumble URL of the quantum circuit.
 
         """
-        if self.has_cultivation_towers and k < MagicStateCultivation.MINIMAL_K_REQUIRED:
+        if self.has_cultivation_towers and k < CultivationBlock.MINIMAL_K_REQUIRED:
             extra = f"[k:{k}, d:{2 * k + 1}]"
             raise TQECError(f"In-place cultivation requires target distance of at least 7 {extra}.")
 
