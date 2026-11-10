@@ -39,6 +39,7 @@ class CultivationBlock:
         TWO = 2
 
     _STATIC_CIRCUIT: Path = Path(__file__).parent / "magic-state-cultivation-s-state.stim"
+    _STATIC_MOMENTS: int = 77  # The static circuit should contain exactly that many moments.
     _STEANE_ANCHOR: tuple[float, float] = (3.0, 1.0)
     _STEANE_CORNER: tuple[float, float] = (5.5, 7.5)
 
@@ -83,7 +84,7 @@ class CultivationBlock:
     @staticmethod
     def __idle_plaquette(schedule_size: int) -> Plaquette:
         return Plaquette(
-            "IDLE_LAYER",
+            "MSC_IDLING",
             PlaquetteQubits([], []),
             ScheduledCircuit(
                 [Moment(stim.Circuit("SHIFT_COORDS"))],
@@ -141,7 +142,6 @@ class CultivationBlock:
         )
 
         block_one = CultivationBlock(CultivationBlock.Part.ONE, height, static_layers, idling)
-
         block_two = CultivationBlock(CultivationBlock.Part.TWO, height, static_layers, idling)
 
         return block_one, block_two
@@ -215,7 +215,15 @@ class CultivationBlock:
             elif instruction.name not in ("DETECTOR", "OBSERVABLE_INCLUDE"):
                 static.append(instruction)
 
-        return ScheduledCircuit.from_circuit(static)
+        scheduled_circuit = ScheduledCircuit.from_circuit(static)
+        moments = sum(1 for _ in scheduled_circuit.scheduled_moments)
+        if moments != CultivationBlock._STATIC_MOMENTS:
+            raise TQECError(
+                f"Expected {CultivationBlock._STATIC_MOMENTS} moments in "
+                f"{CultivationBlock._STATIC_CIRCUIT.name}, found {moments}."
+            )
+
+        return scheduled_circuit
 
     @staticmethod
     def __slice_into_layers(
@@ -228,6 +236,13 @@ class CultivationBlock:
         slot: int,
     ) -> tuple[PlaquetteLayer, ...]:
         """Slice a circuit into pieces of the required size."""
+        moments = sum(1 for _ in circuit.scheduled_moments)
+        if moments % schedule_size != 0:
+            raise TQECError(
+                f"The static cultivation circuit ({moments} moments) cannot be sliced into "
+                f"whole rounds of {schedule_size} moments."
+            )
+
         label = ("M" if mirrored else "") + orientation.name[0]
         patch = DrawPolygon(
             {PauliBasis.Y: [circuit.qubit_map.i2q[i] for i in CultivationBlock._CULTIVATION_PATCH]}

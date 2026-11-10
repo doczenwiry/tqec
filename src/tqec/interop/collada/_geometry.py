@@ -93,8 +93,8 @@ class BlockGeometries:
         self._load_zx_cube_geometries()
         # 1 y half cube block
         self._load_y_cube_geometry()
-        # 1 cultivation block of height 3
-        self._load_cultivation_block_d3_geometry()
+        # 1 cultivation tower of height 3
+        self._load_cultivation_tower_geometry()
         # 6 pipe blocks without H
         self._load_pipe_without_hadamard_geometries()
         # 6 pipe blocks with H
@@ -145,8 +145,8 @@ class BlockGeometries:
             faces.append(face.shift_by(*translation).with_negated_normal_direction())
         self.geometries[LeafCubeKind.Y_HALF_CUBE] = faces
 
-    def _load_cultivation_block_d3_geometry(self) -> None:
-        """Geometry for the Cultivation block: two columns for the cultivation stages."""
+    def _load_cultivation_tower_geometry(self) -> None:
+        """Geometry for the cultivation tower: two columns for the cultivation patches."""
         mx, px, my, py, mz, pz = [
             SignedDirection3D(direction, positive)
             for direction, positive in itertools.product(
