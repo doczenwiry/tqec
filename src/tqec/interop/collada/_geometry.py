@@ -146,7 +146,12 @@ class BlockGeometries:
         self.geometries[LeafCubeKind.Y_HALF_CUBE] = faces
 
     def _load_cultivation_tower_geometry(self) -> None:
-        """Geometry for the cultivation tower: two columns for the cultivation patches."""
+        """Geometry for the cultivation tower.
+
+        - one thin column representing the d=3 Color Code (Steane Code)
+        - one thick column representing the d=5 source Surface Code
+        - one cube on top representing the expansion/stabilization of the target Surface Code
+        """
         mx, px, my, py, mz, pz = [
             SignedDirection3D(direction, positive)
             for direction, positive in itertools.product(
@@ -154,25 +159,28 @@ class BlockGeometries:
             )
         ]
 
-        stable = 1.0 - 9.0 / 7.0
-        expand = 0.0 - stable
-        d5_top = (7.0 - 9.0 / 7.0) / 2
-        d5_btm = stable - d5_top
-        d3_top = 2 * d5_top
-        d3_btm = stable - d3_top
+        expand_btm = 0.0
+        expand_top = 2.0 / 3.0
+        stable_btm = expand_btm + expand_top
+        stable_top = 1.0 - expand_top
+        d5_top = 3.0
+        d5_btm = expand_btm - d5_top
+        padding = 1.0 / 3.0
+        d3_top = 2.0 * d5_top - padding
+        d3_btm = expand_btm - d3_top
 
         face_specifications = [
-            # Target Surface Code confirmed
-            (TQECColor.Y, 1.0, 1.0, mx, FloatPosition3D(0.0, 0.0, 0.0)),
-            (TQECColor.Y, 1.0, 1.0, px, FloatPosition3D(1.0, 0.0, 0.0)),
-            (TQECColor.Y, 1.0, 1.0, my, FloatPosition3D(0.0, 0.0, 0.0)),
-            (TQECColor.Y, 1.0, 1.0, py, FloatPosition3D(0.0, 1.0, 0.0)),
-            # Target Surface Code stabilization
-            (TQECColor.CULTIVATION, 1.0, expand, mx, FloatPosition3D(0.0, 0.0, stable)),
-            (TQECColor.CULTIVATION, 1.0, expand, px, FloatPosition3D(1.0, 0.0, stable)),
-            (TQECColor.CULTIVATION, expand, 1.0, my, FloatPosition3D(0.0, 0.0, stable)),
-            (TQECColor.CULTIVATION, expand, 1.0, py, FloatPosition3D(0.0, 1.0, stable)),
-            (TQECColor.CULTIVATION, 1.0, 1.0, mz, FloatPosition3D(0.0, 0.0, stable)),
+            # Target Surface Code (stabilized)
+            (TQECColor.Z, 1.0, stable_top, mx, FloatPosition3D(0.0, 0.0, stable_btm)),
+            (TQECColor.Z, 1.0, stable_top, px, FloatPosition3D(1.0, 0.0, stable_btm)),
+            (TQECColor.X, stable_top, 1.0, my, FloatPosition3D(0.0, 0.0, stable_btm)),
+            (TQECColor.X, stable_top, 1.0, py, FloatPosition3D(0.0, 1.0, stable_btm)),
+            # Target Surface Code (expanded)
+            (TQECColor.Y, 1.0, 1.0, mz, FloatPosition3D(0.0, 0.0, expand_btm)),
+            (TQECColor.Y, 1.0, expand_top, mx, FloatPosition3D(0.0, 0.0, expand_btm)),
+            (TQECColor.Y, 1.0, expand_top, px, FloatPosition3D(1.0, 0.0, expand_btm)),
+            (TQECColor.Y, expand_top, 1.0, my, FloatPosition3D(0.0, 0.0, expand_btm)),
+            (TQECColor.Y, expand_top, 1.0, py, FloatPosition3D(0.0, 1.0, expand_btm)),
             # Source Surface Code (d=5)
             (TQECColor.CULTIVATION, 2 / 3, d5_top, mx, FloatPosition3D(1 / 3, 1 / 3, d5_btm)),
             (TQECColor.CULTIVATION, 2 / 3, d5_top, px, FloatPosition3D(1.0, 1 / 3, d5_btm)),
@@ -185,7 +193,7 @@ class BlockGeometries:
             (TQECColor.CULTIVATION, d3_top, 0.5, my, FloatPosition3D(1 / 6, -1 / 6, d3_btm)),
             (TQECColor.CULTIVATION, d3_top, 0.5, py, FloatPosition3D(1 / 6, 1 / 3, d3_btm)),
             (TQECColor.CULTIVATION, 0.5, 0.5, mz, FloatPosition3D(1 / 6, -1 / 6, d3_btm)),
-            (TQECColor.CULTIVATION, 0.5, 1 / 6, pz, FloatPosition3D(1 / 6, -1 / 6, stable)),
+            (TQECColor.CULTIVATION, 0.5, 1 / 6, pz, FloatPosition3D(1 / 6, -1 / 6, expand_btm)),
         ]
 
         faces_xzc = []

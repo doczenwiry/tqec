@@ -5,7 +5,13 @@ from fractions import Fraction
 from pyzx.graph.graph_s import GraphS
 from pyzx.utils import EdgeType, FractionLike, VertexType, vertex_is_zx
 
-from tqec.computation.cube import ConditionalCubeKind, CubeKind, LeafCubeKind, ZXCube
+from tqec.computation.cube import (
+    ConditionalCubeKind,
+    CubeKind,
+    CultivationTower,
+    LeafCubeKind,
+    ZXCube,
+)
 from tqec.utils.enums import Basis, Pauli
 from tqec.utils.exceptions import TQECError
 
@@ -66,6 +72,8 @@ def cube_kind_to_zx(kind: CubeKind) -> tuple[VertexType, FractionLike]:
     if kind is LeafCubeKind.PORT:
         return VertexType.BOUNDARY, 0
     if kind is LeafCubeKind.Y_HALF_CUBE:
+        return VertexType.Z, Fraction(1, 2)
+    if isinstance(kind, CultivationTower):
         return VertexType.Z, Fraction(1, 2)
     if isinstance(kind, ConditionalCubeKind):
         raise NotImplementedError(

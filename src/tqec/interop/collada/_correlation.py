@@ -6,7 +6,7 @@ import numpy.typing as npt
 
 from tqec.computation.block_graph import BlockGraph
 from tqec.computation.correlation import CorrelationSurface, ZXEdge
-from tqec.computation.cube import ZXCube
+from tqec.computation.cube import CultivationTower, ZXCube
 from tqec.interop.collada.read_write import _Transformation
 from tqec.utils.enums import Basis
 from tqec.utils.position import Direction3D, FloatPosition3D, Position3D
@@ -44,6 +44,14 @@ class CorrelationSurfaceTransformationHelper:
             cube = self.block_graph[pos]
             # Do not add surfaces in ports or Y Half Cubes
             if cube.is_port or cube.is_y_cube:
+                continue
+            # Add surfaces in cultivation towers that extend through its top (expansion) cube
+            if cube.is_cultivation_tower:
+                transformations.extend(
+                    self._compute_cultivation_tower_transformations(
+                        pos, correlation_surface.edges_at(pos)
+                    )
+                )
                 continue
             transformations.extend(
                 self._compute_cube_transformations(
@@ -183,6 +191,31 @@ class CorrelationSurfaceTransformationHelper:
                         translation=translation.as_array(),
                         scale=np.ones(3, dtype=np.float32),
                         rotation=_rotation_to_plane(kind.normal_direction),
+                    ),
+                )
+            )
+        return transformations
+
+    def _compute_cultivation_tower_transformations(
+        self,
+        v: Position3D,
+        correlation_edges: set[ZXEdge],
+    ) -> list[TransformationResult]:
+        """Continue the surfaces of the incoming pipe down through the tower's top cube."""
+        cube = self.block_graph[v]
+        kind = cube.kind
+        assert isinstance(kind, CultivationTower)
+        scaled_pos = self._scale_position(cube.position)
+        transformations: list[TransformationResult] = []
+        for edge in correlation_edges:
+            normal_direction = self._surface_normal_direction(edge)
+            transformations.append(
+                (
+                    edge.get_basis(v),
+                    _Transformation(
+                        translation=scaled_pos.shift_in_direction(normal_direction, 0.5).as_array(),
+                        rotation=_rotation_to_plane(normal_direction),
+                        scale=np.ones(3, dtype=np.float32),
                     ),
                 )
             )
