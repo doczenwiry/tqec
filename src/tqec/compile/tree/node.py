@@ -288,7 +288,9 @@ class LayerNode:
                 yield mapped_circuit.get_circuit(include_qubit_coords=False)
 
             elif isinstance(self._layer, SequencedLayers):
-                leaf_dict: dict[LayerNode, list[tuple[Callable, ObservableComponent]]] = {}
+                # Nested sequences share the callbacks of their slice.
+                if leaf_dict is None:
+                    leaf_dict = {}
 
                 if should_annotate:
                     if self in ctx.subtree_to_z:
