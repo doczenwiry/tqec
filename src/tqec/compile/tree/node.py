@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import itertools
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import partial
 from typing import TYPE_CHECKING, Any, TypeGuard
 
 import stim
 
 if TYPE_CHECKING:
+    from tqec.compile.blocks.cultivation.cultivation_block import CultivationBlock
+    from tqec.compile.blocks.positioning import LayoutPosition2D
     from tqec.compile.tree.annotators.detectors import AnnotateDetectorsOnLayerNode
 
 from tqec.circuit.qubit_map import QubitMap
@@ -63,6 +65,9 @@ class AnnotationContext:
     abstract_observables: list[AbstractObservable]
     observable_builder: ObservableBuilder
     slices_with_temporal_hadamard_layer: set[int]
+    cultivation_blocks: Mapping[int, Mapping[LayoutPosition2D, CultivationBlock]] = field(
+        default_factory=dict
+    )
 
 
 class LayerNode:
@@ -320,6 +325,12 @@ class LayerNode:
                             leaf_dict[readout_layer].append(
                                 (ao_partial, ObservableComponent.TOP_READOUTS)
                             )
+
+                            # Measurements of the cultivation towers
+                            for tower in obs_slice.cultivation_towers:
+                                # TODO: register the ObservableComponent.CULTIVATION callbacks
+                                # TODO: register the ObservableComponent.EXPANSION callbacks
+                                ...
 
                 for child, next_child in itertools.pairwise(self._children):
                     circ = child._generate_circuits_with_potential_polygons_stream(

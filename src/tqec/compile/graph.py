@@ -425,15 +425,6 @@ class TopologicalComputationGraph:
             key = LayoutPosition3D.from_pipe_position((source, sink))
             self._blocks[key] = block
 
-    @staticmethod
-    def _materialise(block: Block | CultivationBlock, k: int | None) -> Block:
-        if isinstance(block, Block):
-            return block
-        else:  # isinstance(block, CultivationBlock)
-            if k is None:
-                raise TQECError("A value of k is required to generate cultivation blocks.")
-            return block.materialise(k)
-
     def to_layer_tree(self, k: int | None = None) -> LayerTree:
         """Merge layers happening in parallel at each time step.
 
@@ -466,8 +457,16 @@ class TopologicalComputationGraph:
         temporal_pipes_by_z: list[dict[LayoutPosition2D, Block]] = [
             {} for _ in range(min_z, max_z + 1)
         ]
+        cultivation_blocks: dict[int, dict[LayoutPosition2D, CultivationBlock]] = {}
+
         for pos, block in self._blocks.items():
-            blocks_by_z[pos.z - min_z][pos.as_2d()] = self._materialise(block, k)
+            if isinstance(block, CultivationBlock):
+                if k is None:
+                    raise TQECError("A value of k is required to materialise cultivation blocks.")
+                cultivation_blocks.setdefault(pos.z - min_z, {})[pos.as_2d()] = block
+                blocks_by_z[pos.z - min_z][pos.as_2d()] = block.materialise(k)
+            else:
+                blocks_by_z[pos.z - min_z][pos.as_2d()] = block
         for pos, pipe in self._temporal_pipes_at_hadamard_layer.items():
             temporal_pipes_by_z[pos.z - min_z][pos.as_2d()] = pipe
         return LayerTree(
@@ -485,6 +484,7 @@ class TopologicalComputationGraph:
             slices_with_temporal_hadamard_layer={
                 pos.z - min_z for pos in self._temporal_pipes_at_hadamard_layer
             },
+            cultivation_blocks=cultivation_blocks,
         )
 
     def generate_stim_circuit(

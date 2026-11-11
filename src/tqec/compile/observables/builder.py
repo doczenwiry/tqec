@@ -60,6 +60,8 @@ class ObservableComponent(Enum):
     BOTTOM_STABILIZERS = "bottom_stabilizers"
     TOP_READOUTS = "top_readouts"
     REALIGNMENT = "realignment"
+    CULTIVATION = "cultivation"
+    EXPANSION = "expansion"
 
 
 Coordinates2D = tuple[float, float] | tuple[int, int]

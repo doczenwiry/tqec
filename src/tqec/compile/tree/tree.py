@@ -4,9 +4,14 @@ import warnings
 from collections.abc import Iterator, Mapping, Sequence
 from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import stim
+
+if TYPE_CHECKING:
+    from tqec.compile.blocks.cultivation.cultivation_block import CultivationBlock
+    from tqec.compile.blocks.positioning import LayoutPosition2D
+
 from typing_extensions import override
 
 from tqec.circuit.qubit import GridQubit
@@ -81,12 +86,13 @@ class LayerTree:
         abstract_observables: list[AbstractObservable] | None = None,
         annotations: Mapping[int, LayerTreeAnnotations] | None = None,
         slices_with_temporal_hadamard_layer: set[int] | None = None,
+        cultivation_blocks: Mapping[int, Mapping[LayoutPosition2D, CultivationBlock]] | None = None,
     ):
         """Represent a computation as a tree.
 
         Note:
             It is expected that the root is a
-            :class:`~tqec.compile.blocks.layer.composed.sequenced.SequencedLayers`
+            :class:`~tqec.compile.blocks.layers.composed.sequenced.SequencedLayers`
             with each of its children representing the computation on a timespan
             equivalent to the timespan of a cube.
 
@@ -105,6 +111,8 @@ class LayerTree:
                 individual observable has its own Hadamard pipe.
             observable_builder: the builder used to compute the qubits included in the logical
                 observables.
+            cultivation_blocks: the cultivation blocks of the computation, by slice and position.
+                Used to include the measurements of the static circuit into the logical observables.
 
         """
         self._root = LayerNode(root)
@@ -112,6 +120,7 @@ class LayerTree:
         self._annotations = dict(annotations) if annotations is not None else {}
         self._observable_builder = observable_builder
         self._slices_with_temporal_hadamard_layer = slices_with_temporal_hadamard_layer or set()
+        self._cultivation_blocks = cultivation_blocks or {}
 
     def to_dict(self) -> dict[str, Any]:
         """Return a dictionary representation of ``self``."""
@@ -145,6 +154,7 @@ class LayerTree:
                 obs_idx,
                 self._observable_builder,
                 self._slices_with_temporal_hadamard_layer,
+                self._cultivation_blocks,
             )
 
     def _annotate_detectors(
@@ -492,6 +502,7 @@ class LayerTree:
                 self._abstract_observables,
                 self._observable_builder,
                 self._slices_with_temporal_hadamard_layer,
+                self._cultivation_blocks,
             )
 
             try:

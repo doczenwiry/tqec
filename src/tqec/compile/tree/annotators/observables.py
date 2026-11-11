@@ -12,6 +12,10 @@ from tqec.compile.observables.builder import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from tqec.compile.blocks.cultivation.cultivation_block import CultivationBlock
+    from tqec.compile.blocks.positioning import LayoutPosition2D
     from tqec.compile.tree.node import LayerNode
 
 
@@ -29,6 +33,7 @@ def annotate_observable(
     observable_index: int,
     observable_builder: ObservableBuilder,
     slices_with_temporal_hadamard_layer: set[int],
+    cultivation_blocks: Mapping[int, Mapping[LayoutPosition2D, CultivationBlock]] | None = None,
 ) -> None:
     """Annotates the observables on the tree.
 
@@ -41,6 +46,7 @@ def annotate_observable(
             measurements will be included in the logical observable.
         slices_with_temporal_hadamard_layer: z slices containing a temporal
             Hadamard layer.
+        cultivation_blocks: the cultivation blocks in the computation by z-slice and position
 
     """
     for z, subtree_root in enumerate(root.children):
@@ -80,6 +86,12 @@ def annotate_observable(
             observable_builder,
             ObservableComponent.TOP_READOUTS,
         )
+
+        # Annotate the observable in the cultivation towers
+        for tower in obs_slice.cultivation_towers:
+            # TODO: include the measurements from the ``CultivationBlock`` into the observable
+            # TODO: include the measurements of the expansion layer into the observable
+            ...
 
 
 def _annotate_observable_at_node(

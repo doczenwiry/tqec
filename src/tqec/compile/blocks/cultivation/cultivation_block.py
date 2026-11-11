@@ -1,12 +1,15 @@
 from enum import Enum
 
+import numpy
 import stim
 
+from tqec.circuit.measurement import Measurement
 from tqec.circuit.moment import Moment
 from tqec.circuit.qubit_map import QubitMap
 from tqec.circuit.schedule import ScheduledCircuit
 from tqec.compile.blocks.block import Block
 from tqec.compile.blocks.cultivation.cultivation_circuit import CultivationCircuit
+from tqec.compile.blocks.layers.atomic.base import BaseLayer
 from tqec.compile.blocks.layers.atomic.plaquettes import PlaquetteLayer
 from tqec.compile.blocks.layers.composed import RepeatedLayer, SequencedLayers
 from tqec.plaquette import (
@@ -17,6 +20,7 @@ from tqec.plaquette import (
 )
 from tqec.templates.qubit import QubitTemplate
 from tqec.utils import Orientation, TQECError
+from tqec.utils.position import PhysicalQubitPosition2D, PlaquettePosition2D
 from tqec.utils.scale import LinearFunction, PhysicalQubitScalable2D
 
 
@@ -37,6 +41,7 @@ class CultivationBlock:
         circuit: CultivationCircuit,
         plaquette_layers: tuple[PlaquetteLayer, ...],
         idling: PlaquetteLayer,
+        plaquette_slot: int,
         height: LinearFunction,
         part: Part,
     ):
@@ -46,6 +51,7 @@ class CultivationBlock:
             circuit: the contents of the static cultivation circuit
             plaquette_layers: the plaquette layers describing the layers of the cultivation circuit
             idling: a PlaquetteLayer representing idling that is used for padding
+            plaquette_slot: the index of the plaquette where the cultivation occurs
             height: will determine how the layers are placed across the Blocks when materialized
             part: describes whether CultivationBlock is the first or second in the CultivationTower
 
@@ -53,6 +59,7 @@ class CultivationBlock:
         self._circuit = circuit
         self._plaquette_layers = plaquette_layers
         self._idling = idling
+        self._plaquette_slot = plaquette_slot
         self._height = height
         self._part = part
 
@@ -60,6 +67,37 @@ class CultivationBlock:
     def scalable_shape(self) -> PhysicalQubitScalable2D:
         """Shape of the surface code patch over which the cultivation is performed."""
         return self._idling.scalable_shape
+
+    def observable_at(self, layer: BaseLayer | None, k: int) -> frozenset[Measurement]:
+        """Return the measurements of ``layer`` to be included in the observable.
+
+        Args:
+            layer: a layer of the materialized block. Only the layers of the static circuit
+                can contain measurements to be included in the observable.
+            k: scaling factor.
+
+        Returns:
+            the measurements, with qubits in the coordinates of the block and offsets
+            relative to the end of ``layer``.
+
+        """
+        index = next((i for i, own in enumerate(self._plaquette_layers) if own is layer), None)
+        frame = self._circuit.observable_frame
+
+        if index is not None and index in frame:
+            anchor = self._cultivation_anchor(k)
+            measurements = iter(m.offset_spatially_by(anchor.x, anchor.y) for m in frame[index])
+        else:
+            measurements = iter(())
+
+        return frozenset(measurements)
+
+    def _cultivation_anchor(self, k: int) -> PhysicalQubitPosition2D:
+        """Position, in the coordinates of the block, where the cultivation circuit is anchored."""
+        template = self._idling.template
+        rows, cols = numpy.nonzero(template.instantiate(k) == self._plaquette_slot)
+        slot = PlaquettePosition2D(int(cols[0]), int(rows[0]))
+        return slot.get_origin_position(template.get_increments())
 
     @staticmethod
     def __idle_plaquette(schedule_size: int) -> Plaquette:
@@ -124,10 +162,10 @@ class CultivationBlock:
         )
 
         block_one = CultivationBlock(
-            cultivation_circuit, plaquette_layers, idling, height, CultivationBlock.Part.ONE
+            cultivation_circuit, plaquette_layers, idling, slot, height, CultivationBlock.Part.ONE
         )
         block_two = CultivationBlock(
-            cultivation_circuit, plaquette_layers, idling, height, CultivationBlock.Part.TWO
+            cultivation_circuit, plaquette_layers, idling, slot, height, CultivationBlock.Part.TWO
         )
 
         return block_one, block_two
