@@ -116,7 +116,13 @@ def compile_block_graph(
     block_graph = block_graph.fix_shadowed_faces()
 
     # Set the minimum z of block graph to 0.(time starts from zero)
-    minz = min(cube.position.z for cube in block_graph.cubes)
+    # A cultivation tower occupies two cubes below its own position as well.
+    minz = min(
+        cube.position.z - (cube.kind.height - 1)
+        if isinstance(cube.kind, CultivationTower)
+        else cube.position.z
+        for cube in block_graph.cubes
+    )
     if minz != 0:
         block_graph = block_graph.shift_by(dz=-minz)
 
