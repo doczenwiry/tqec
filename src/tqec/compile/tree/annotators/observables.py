@@ -13,6 +13,7 @@ from tqec.compile.observables.builder import (
     ObservableComponent,
     get_observable_with_measurement_records,
 )
+from tqec.compile.specs.library.generators.expansion import SurfaceCodeExpansionLayer
 from tqec.utils.position import BlockPosition2D
 
 if TYPE_CHECKING:
@@ -108,8 +109,19 @@ def annotate_observable(
                         observable_index,
                         ObservableComponent.CULTIVATION,
                     )
-            # TODO: include the measurements of the expansion layer into the observable
-            ...
+            else:
+                # Without a block in this slice, the slice is the top of the tower.
+                below = blocks_by_z.get(z - 1, {}).get(position)
+                if below is not None:
+                    _annotate_expansion_at_node(
+                        leaves[0],
+                        position,
+                        below,
+                        block_position,
+                        k,
+                        observable_index,
+                        ObservableComponent.EXPANSION,
+                    )
 
 
 def _annotate_observable_at_node(
@@ -179,3 +191,23 @@ def _annotate_block_measurements_at_node(
                 [records[m.qubit][m.offset] for m in shifted],
             )
         )
+
+
+def _annotate_expansion_at_node(
+    node: LayerNode,
+    position: LayoutPosition2D,
+    block: CultivationBlock,
+    block_position: BlockPosition2D,
+    k: int,
+    observable_index: int,
+    component: ObservableComponent,
+) -> None:
+    """Include the expansion correction of ``block`` performed by ``node`` in the observable."""
+    assert component == ObservableComponent.EXPANSION
+    if isinstance(node._layer, LayoutLayer):
+        layer = node._layer.layers.get(position)
+        if isinstance(layer, SurfaceCodeExpansionLayer):
+            measurements = layer.observable_correction(block.observable_representative(k), k)
+            _annotate_block_measurements_at_node(
+                node, measurements, block_position, k, observable_index
+            )

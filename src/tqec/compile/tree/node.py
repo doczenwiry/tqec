@@ -32,6 +32,7 @@ from tqec.compile.observables.builder import (
 from tqec.compile.tree.annotations import LayerNodeAnnotations, Polygon
 from tqec.compile.tree.annotators.observables import (
     _annotate_cultivation_frame_at_node,
+    _annotate_expansion_at_node,
     _annotate_observable_at_node,
     get_ordered_leaves,
 )
@@ -352,8 +353,20 @@ class LayerNode:
                                         leaf_dict.setdefault(leaf, []).append(
                                             (frame_partial, ObservableComponent.CULTIVATION)
                                         )
-                                # TODO: register the ObservableComponent.EXPANSION callbacks
-                                ...
+                                else:
+                                    below = ctx.cultivation_blocks.get(z - 1, {}).get(position)
+                                    if below is not None:
+                                        expansion_partial = partial(
+                                            _annotate_expansion_at_node,
+                                            position=position,
+                                            block=below,
+                                            block_position=block_position,
+                                            k=k,
+                                            observable_index=obs_idx,
+                                        )
+                                        leaf_dict.setdefault(leaves[0], []).append(
+                                            (expansion_partial, ObservableComponent.EXPANSION)
+                                        )
 
                 for child, next_child in itertools.pairwise(self._children):
                     circ = child._generate_circuits_with_potential_polygons_stream(

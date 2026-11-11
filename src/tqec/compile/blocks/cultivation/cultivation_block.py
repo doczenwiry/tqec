@@ -5,6 +5,7 @@ import stim
 
 from tqec.circuit.measurement import Measurement
 from tqec.circuit.moment import Moment
+from tqec.circuit.qubit import GridQubit
 from tqec.circuit.qubit_map import QubitMap
 from tqec.circuit.schedule import ScheduledCircuit
 from tqec.compile.blocks.block import Block
@@ -18,6 +19,7 @@ from tqec.plaquette import (
     PlaquetteQubits,
     Plaquettes,
 )
+from tqec.plaquette.rpng import PauliBasis
 from tqec.templates.qubit import QubitTemplate
 from tqec.utils import Orientation, TQECError
 from tqec.utils.position import PhysicalQubitPosition2D, PlaquettePosition2D
@@ -67,6 +69,12 @@ class CultivationBlock:
     def scalable_shape(self) -> PhysicalQubitScalable2D:
         """Shape of the surface code patch over which the cultivation is performed."""
         return self._idling.scalable_shape
+
+    def observable_representative(self, k: int) -> dict[GridQubit, PauliBasis]:
+        """Return the representative, shifted for scale k, of the cultivated logical observable."""
+        anchor = self._cultivation_anchor(k)
+        representative = self._circuit.observable_representative
+        return {qubit + anchor: basis for qubit, basis in representative.items()}
 
     def observable_at(self, layer: BaseLayer | None, k: int) -> frozenset[Measurement]:
         """Return the measurements of ``layer`` to be included in the observable.
