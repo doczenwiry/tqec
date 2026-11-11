@@ -1,15 +1,12 @@
-import itertools
 from enum import Enum
-from pathlib import Path
-from typing import ClassVar
 
-import numpy
 import stim
 
 from tqec.circuit.moment import Moment
 from tqec.circuit.qubit_map import QubitMap
 from tqec.circuit.schedule import ScheduledCircuit
 from tqec.compile.blocks.block import Block
+from tqec.compile.blocks.cultivation.cultivation_circuit import CultivationCircuit
 from tqec.compile.blocks.layers.atomic.plaquettes import PlaquetteLayer
 from tqec.compile.blocks.layers.composed import RepeatedLayer, SequencedLayers
 from tqec.plaquette import (
@@ -18,17 +15,9 @@ from tqec.plaquette import (
     PlaquetteQubits,
     Plaquettes,
 )
-from tqec.plaquette.debug import DrawPolygon, PlaquetteDebugInformation
-from tqec.plaquette.rpng import PauliBasis
 from tqec.templates.qubit import QubitTemplate
 from tqec.utils import Orientation, TQECError
 from tqec.utils.scale import LinearFunction, PhysicalQubitScalable2D
-
-
-def _batched(iterable, n):
-    it = iter(iterable)
-    while chunk := tuple(itertools.islice(it, n)):
-        yield chunk
 
 
 class CultivationBlock:
@@ -38,18 +27,6 @@ class CultivationBlock:
         ONE = 1
         TWO = 2
 
-    _STATIC_CIRCUIT: Path = Path(__file__).parent / "magic-state-cultivation-s-state.stim"
-    _STATIC_MOMENTS: int = 77  # The static circuit should contain exactly that many moments.
-    _STEANE_ANCHOR: tuple[float, float] = (3.0, 1.0)
-    _STEANE_CORNER: tuple[float, float] = (5.5, 7.5)
-
-    # fmt: off
-    _CULTIVATION_PATCH: ClassVar[list[int]] = [
-        14, 22, 38, 39, 46, 47, 57, 63, 68, 64, 65, 69, 66, 67, 62,
-        56, 45, 37, 29, 13,  5, 11,  4, 10,  9,  3,  0,  2,  1,  6,
-    ]
-    # fmt: on
-
     MINIMAL_K_REQUIRED: int = 3
     """Smallest k (target distance 2k + 1) for which the static circuit fits in 2 blocks.
     Also required for the ExpansionTemplate which uses a source distance of 5 which requires
@@ -57,24 +34,27 @@ class CultivationBlock:
 
     def __init__(
         self,
-        part: Part,
-        height: LinearFunction,
-        layers: tuple[PlaquetteLayer, ...],
+        circuit: CultivationCircuit,
+        plaquette_layers: tuple[PlaquetteLayer, ...],
         idling: PlaquetteLayer,
+        height: LinearFunction,
+        part: Part,
     ):
         """Initialize a CultivationBlock.
 
         Args:
-            part: describes whether CultivationBlock is the first or second in the CultivationTower
-            height: will determine how the layers are placed across the Blocks when materialised
-            layers: the layers of the static cultivation circuit sliced beforehand
+            circuit: the contents of the static cultivation circuit
+            plaquette_layers: the plaquette layers describing the layers of the cultivation circuit
             idling: a PlaquetteLayer representing idling that is used for padding
+            height: will determine how the layers are placed across the Blocks when materialized
+            part: describes whether CultivationBlock is the first or second in the CultivationTower
 
         """
-        self._part = part
-        self._height = height
-        self._layers = layers
+        self._circuit = circuit
+        self._plaquette_layers = plaquette_layers
         self._idling = idling
+        self._height = height
+        self._part = part
 
     @property
     def scalable_shape(self) -> PhysicalQubitScalable2D:
@@ -84,7 +64,7 @@ class CultivationBlock:
     @staticmethod
     def __idle_plaquette(schedule_size: int) -> Plaquette:
         return Plaquette(
-            "MSC_IDLING",
+            f"{CultivationCircuit.PREFIX}_IDLING",
             PlaquetteQubits([], []),
             ScheduledCircuit(
                 [Moment(stim.Circuit("SHIFT_COORDS"))],
@@ -132,17 +112,23 @@ class CultivationBlock:
         mirrored = mirrored_horizontal and orientation == Orientation.HORIZONTAL
         slot = 3 if mirrored else 4
 
-        static_circuit = CultivationBlock.__load_static_cultivation_circuit(orientation, mirrored)
-        static_layers = CultivationBlock.__slice_into_layers(
-            static_circuit, orientation, mirrored, schedule_size, template, empty, slot
+        cultivation_circuit = CultivationCircuit(orientation, mirrored, schedule_size)
+
+        plaquette_layers = tuple(
+            CultivationBlock.__plaquette_layer(template, plaquette, empty, slot)
+            for plaquette in cultivation_circuit.plaquettes
         )
 
         idling = CultivationBlock.__plaquette_layer(
             template, CultivationBlock.__idle_plaquette(schedule_size), empty, slot
         )
 
-        block_one = CultivationBlock(CultivationBlock.Part.ONE, height, static_layers, idling)
-        block_two = CultivationBlock(CultivationBlock.Part.TWO, height, static_layers, idling)
+        block_one = CultivationBlock(
+            cultivation_circuit, plaquette_layers, idling, height, CultivationBlock.Part.ONE
+        )
+        block_two = CultivationBlock(
+            cultivation_circuit, plaquette_layers, idling, height, CultivationBlock.Part.TWO
+        )
 
         return block_one, block_two
 
@@ -165,19 +151,19 @@ class CultivationBlock:
         """
         distance = 2 * k + 1
 
-        if 2 * distance < len(self._layers):
+        if 2 * distance < len(self._plaquette_layers):
             raise TQECError(
-                f"Cultivation needs {len(self._layers)} rounds but two blocks only hold "
+                f"Cultivation needs {len(self._plaquette_layers)} rounds but two blocks only hold "
                 f"{2 * distance} at k={k}; use k >= {CultivationBlock.MINIMAL_K_REQUIRED}."
             )
 
-        split = max(0, len(self._layers) - distance)
+        split = max(0, len(self._plaquette_layers) - distance)
 
         match self._part:
             case CultivationBlock.Part.ONE:
-                layers = self._layers[:split]
+                layers = self._plaquette_layers[:split]
             case CultivationBlock.Part.TWO:
-                layers = self._layers[split:]
+                layers = self._plaquette_layers[split:]
 
         idle_count: int = distance - len(layers)
         start = self._idling if idle_count > 0 else layers[0]
@@ -189,77 +175,3 @@ class CultivationBlock:
         filler = RepeatedLayer(self._idling, self._height - len(middle))
 
         return Block([start, SequencedLayers([filler, *middle]), final])
-
-    @staticmethod
-    def __load_static_cultivation_circuit(
-        orientation: Orientation,
-        mirrored: bool,
-    ) -> ScheduledCircuit:
-        """Prepare the static circuit (Injection+Superdense+Doublecheck+Teleportation)."""
-        anchor = numpy.array(CultivationBlock._STEANE_ANCHOR)
-        corner = numpy.array(CultivationBlock._STEANE_CORNER)
-
-        loaded = stim.Circuit.from_file(CultivationBlock._STATIC_CIRCUIT)
-        static = stim.Circuit()
-
-        for instruction in loaded.flattened():
-            assert isinstance(instruction, stim.CircuitInstruction)
-            if instruction.name == "QUBIT_COORDS":
-                location = numpy.array(instruction.gate_args_copy())
-                position = 2 * (location - (anchor + corner))
-                if orientation == Orientation.VERTICAL:
-                    position[0], position[1] = position[1], position[0]
-                elif mirrored:
-                    position[0] = -position[0]
-                static.append("QUBIT_COORDS", instruction.targets_copy(), position)
-            elif instruction.name not in ("DETECTOR", "OBSERVABLE_INCLUDE"):
-                static.append(instruction)
-
-        scheduled_circuit = ScheduledCircuit.from_circuit(static)
-        moments = sum(1 for _ in scheduled_circuit.scheduled_moments)
-        if moments != CultivationBlock._STATIC_MOMENTS:
-            raise TQECError(
-                f"Expected {CultivationBlock._STATIC_MOMENTS} moments in "
-                f"{CultivationBlock._STATIC_CIRCUIT.name}, found {moments}."
-            )
-
-        return scheduled_circuit
-
-    @staticmethod
-    def __slice_into_layers(
-        circuit: ScheduledCircuit,
-        orientation: Orientation,
-        mirrored: bool,
-        schedule_size: int,
-        template: QubitTemplate,
-        empty: Plaquette,
-        slot: int,
-    ) -> tuple[PlaquetteLayer, ...]:
-        """Slice a circuit into pieces of the required size."""
-        moments = sum(1 for _ in circuit.scheduled_moments)
-        if moments % schedule_size != 0:
-            raise TQECError(
-                f"The static cultivation circuit ({moments} moments) cannot be sliced into "
-                f"whole rounds of {schedule_size} moments."
-            )
-
-        label = ("M" if mirrored else "") + orientation.name[0]
-        patch = DrawPolygon(
-            {PauliBasis.Y: [circuit.qubit_map.i2q[i] for i in CultivationBlock._CULTIVATION_PATCH]}
-        )
-
-        layers: list[PlaquetteLayer] = []
-        for index, moments in enumerate(_batched(circuit.scheduled_moments, schedule_size)):
-            subcircuit = ScheduledCircuit(
-                [m for _, m in moments], list(range(schedule_size)), circuit.qubit_map
-            )
-            plaquette = Plaquette(
-                f"MSC_{label}_{index}",
-                PlaquetteQubits([], sorted(subcircuit.qubits)),
-                subcircuit,
-                debug_information=PlaquetteDebugInformation(draw_polygons=patch),
-            )
-
-            layers.append(CultivationBlock.__plaquette_layer(template, plaquette, empty, slot))
-
-        return tuple(layers)
