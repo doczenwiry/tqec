@@ -6,6 +6,7 @@ from typing_extensions import override
 
 from tqec.compile.blocks.block import Block
 from tqec.compile.blocks.cultivation.cultivation_block import CultivationBlock
+from tqec.compile.blocks.cultivation.cultivation_circuit import CultivationCircuit
 from tqec.compile.blocks.layers.atomic.base import BaseLayer
 from tqec.compile.blocks.layers.atomic.plaquettes import PlaquetteLayer
 from tqec.compile.blocks.layers.composed.base import BaseComposedLayer
@@ -480,7 +481,7 @@ class FixedBoundaryCultivationBuilder(MagicStateCultivation):
             self._mapper,
             orientation,
             FixedBoundaryCultivationBuilder._MIRRORED_HORIZONTAL,
-            5,
+            CultivationCircuit.SOURCE_DISTANCE,
         )
         stabilizing_layer = PlaquetteLayer(
             self._template, self._generator.get_memory_qubit_plaquettes(False, orientation)

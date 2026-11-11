@@ -33,8 +33,8 @@ class CultivationBlock:
 
     MINIMAL_K_REQUIRED: int = 3
     """Smallest k (target distance 2k + 1) for which the static circuit fits in 2 blocks.
-    Also required for the ExpansionTemplate which uses a source distance of 5 which requires
-    a strictly greater target distance."""
+    Also required for the ExpansionTemplate, whose target distance must be strictly greater
+    than ``CultivationCircuit.SOURCE_DISTANCE``."""
 
     def __init__(
         self,

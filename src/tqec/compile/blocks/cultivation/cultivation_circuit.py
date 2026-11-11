@@ -1,11 +1,14 @@
 import itertools
+from collections import defaultdict
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Final
 
 import numpy
 import stim
 
 from tqec.circuit.measurement import Measurement
+from tqec.circuit.qubit import GridQubit
+from tqec.circuit.qubit_map import QubitMap
 from tqec.circuit.schedule import ScheduledCircuit
 from tqec.plaquette import Plaquette, PlaquetteQubits
 from tqec.plaquette.debug import DrawPolygon, PlaquetteDebugInformation
@@ -31,13 +34,16 @@ class CultivationCircuit:
     - It contains a complete set of DETECTOR annotations
     - It contains one OBSERVABLE_INCLUDE annotation describing the frame for tracking
     - It contains one OBSERVABLE_INCLUDE annotation providing the representative as an MPP
-    - The final two lines are the representative observable and will be discarded at loading-time
+    - The final two lines are the representative observable; the MPP is parsed and stored
     """
     _STATIC_MOMENTS: int = 77
     """The number of moments the static circuit should contain"""
     _STEANE_ANCHOR: tuple[float, float] = (3.0, 1.0)
     """The location where the Steane Code patch (i.e. d=3 color code) is anchored"""
     _STEANE_CORNER: tuple[float, float] = (5.5, 7.5)
+    """The offset from the anchor to the bottom right corner of the source Surface Code patch"""
+    SOURCE_DISTANCE: Final[int] = 5
+    """The distance of the source Surface Code patch at the end of the static cultivation circuit"""
 
     # fmt: off
     _PATCH: ClassVar[list[int]] = [
@@ -69,6 +75,7 @@ class CultivationCircuit:
         static = stim.Circuit()
         records: list[tuple[int, int]] = []  # (moment, qubit) of every measurement
         observable_include: set[int] = set()  # Indices of records to include in the observable
+        observable_representative: list[stim.GateTarget] | None = None
         moment: int = 0
         for instruction in loaded.flattened():
             assert isinstance(instruction, stim.CircuitInstruction)
@@ -81,7 +88,7 @@ class CultivationCircuit:
                     position[0] = -position[0]
                 static.append("QUBIT_COORDS", instruction.targets_copy(), position)
             elif instruction.name == "MPP":
-                # Stop processing the circuit
+                observable_representative = instruction.targets_copy()
                 break
             elif instruction.name == "DETECTOR":
                 continue  # Ignore the DETECTOR annotations for now.
@@ -103,9 +110,14 @@ class CultivationCircuit:
                     records.extend((moment, target.value) for target in instruction.targets_copy())
                 static.append(instruction)
 
-        if not observable_include:
+        if len(observable_include) == 0:
             raise TQECError(
                 f"No OBSERVABLE_INCLUDE found in {CultivationCircuit._STATIC_CIRCUIT.name}."
+            )
+
+        if observable_representative is None:
+            raise TQECError(
+                f"No MPP found in {CultivationCircuit._STATIC_CIRCUIT.name} for the representative."
             )
 
         # Validate the number of moments in the ScheduledCircuit.
@@ -116,6 +128,11 @@ class CultivationCircuit:
                 f"Expected {CultivationCircuit._STATIC_MOMENTS} moments in "
                 f"{CultivationCircuit._STATIC_CIRCUIT.name}, found {moment_count}."
             )
+
+        # Convert the observable representative
+        self._observable_representative = CultivationCircuit.__parse_representative(
+            observable_representative, self._circuit.qubit_map, orientation
+        )
 
         # Convert the measurements to be included in the observable into a frame.
         frame: dict[int, set[Measurement]] = {}
@@ -137,6 +154,11 @@ class CultivationCircuit:
     def observable_frame(self) -> dict[int, frozenset[Measurement]]:
         """Return the frame of measurements to be included in an observable."""
         return dict(self._observable_frame)
+
+    @property
+    def observable_representative(self) -> dict[GridQubit, PauliBasis]:
+        """Return the representative of the cultivated logical, as measured by the final MPP."""
+        return dict(self._observable_representative)
 
     @property
     def plaquettes(self) -> tuple[Plaquette, ...]:
@@ -175,3 +197,65 @@ class CultivationCircuit:
             )
 
         return tuple(plaquettes)
+
+    @staticmethod
+    def __parse_representative(
+        targets: list[stim.GateTarget], qubit_map: QubitMap, orientation: Orientation
+    ) -> dict[GridQubit, PauliBasis]:
+        """Convert the targets of an MPP into a logical observable.
+
+        The representative observable is expected to be L-shaped: a Y on the corner,
+        from which an arm of X and an arm of Z extend along the two axes,
+        each spanning ``SOURCE_DISTANCE`` qubits.
+        """
+        distance = CultivationCircuit.SOURCE_DISTANCE
+
+        representative: dict[GridQubit, PauliBasis] = {}
+        for target in targets:
+            if target.is_x_target:
+                representative[qubit_map.i2q[target.value]] = PauliBasis.X
+            elif target.is_y_target:
+                representative[qubit_map.i2q[target.value]] = PauliBasis.Y
+            elif target.is_z_target:
+                representative[qubit_map.i2q[target.value]] = PauliBasis.Z
+
+        qubits: dict[PauliBasis, list[GridQubit]] = defaultdict(list)
+        for q, basis in representative.items():
+            qubits[basis].append(q)
+
+        if len(qubits[PauliBasis.Y]) != 1:
+            raise TQECError(
+                f"Expected an L-shaped Y-observable representative of distance {distance} "
+                f"in {CultivationCircuit._STATIC_CIRCUIT.name} [#Y != 1]."
+            )
+        qy = qubits[PauliBasis.Y][0]
+
+        if len(qubits[PauliBasis.X]) != distance - 1:
+            raise TQECError(
+                f"Expected an L-shaped Y-observable representative of distance {distance} "
+                f"in {CultivationCircuit._STATIC_CIRCUIT.name} [#X != {distance - 1}]."
+            )
+        if not all(
+            qx.x == qy.x if orientation == Orientation.HORIZONTAL else qx.y == qy.y
+            for qx in qubits[PauliBasis.X]
+        ):
+            raise TQECError(
+                f"Expected an L-shaped Y-observable representative of distance {distance} "
+                f"in {CultivationCircuit._STATIC_CIRCUIT.name} [line(qx) != line(qy)]."
+            )
+
+        if len(qubits[PauliBasis.Z]) != distance - 1:
+            raise TQECError(
+                f"Expected an L-shaped Y-observable representative of distance {distance} "
+                f"in {CultivationCircuit._STATIC_CIRCUIT.name} [#Z != {distance - 1}]."
+            )
+        if not all(
+            qz.y == qy.y if orientation == Orientation.HORIZONTAL else qz.x == qy.x
+            for qz in qubits[PauliBasis.Z]
+        ):
+            raise TQECError(
+                f"Expected an L-shaped Y-observable representative of distance {distance} "
+                f"in {CultivationCircuit._STATIC_CIRCUIT.name} [line(qz) != line(qy)]."
+            )
+
+        return representative
