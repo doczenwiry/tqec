@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from tqec.compile.specs.enums import SpatialArms
 from tqec.computation.block_graph import BlockGraph
 from tqec.computation.correlation import CorrelationSurface, ZXEdge
-from tqec.computation.cube import Cube, ZXCube
+from tqec.computation.cube import Cube, CultivationTower, ZXCube
 from tqec.computation.pipe import Pipe
 from tqec.utils.enums import Basis, Pauli
 from tqec.utils.exceptions import TQECError
@@ -113,6 +113,9 @@ class AbstractObservable:
             by the pipe might be included in the logical observable. It is only
             relevant for the fixed-bulk convention, where the temporal Hadamard
             includes a realignment layer of stabilizers.
+        cultivation_towers: A set of cultivation towers at which the correlation surface ends.
+            Each contributes the records tracking the Pauli frame of the static cultivation circuit
+            needed to connect the cultivated logical to the rest of the observable.
 
     """
 
@@ -121,6 +124,14 @@ class AbstractObservable:
     bottom_stabilizer_cubes: frozenset[CubeWithArms] = frozenset()
     bottom_stabilizer_pipes: frozenset[PipeWithArms] = frozenset()
     temporal_hadamard_pipes: frozenset[PipeWithObservableBasis] = frozenset()
+    cultivation_towers: frozenset[Cube] = frozenset()
+
+    @staticmethod
+    def _cultivation_tower_spans(cube: Cube, z: int) -> bool:
+        """Check whether the `CultivationTower` passes through slice z."""
+        if not isinstance(cube.kind, CultivationTower):
+            raise TQECError("Cube is not a CultivationTower.")
+        return cube.position.z - (cube.kind.height - 1) <= z <= cube.position.z
 
     def slice_at_z(self, z: int) -> AbstractObservable:
         """Get the observable slice at the given z position."""
@@ -130,6 +141,7 @@ class AbstractObservable:
             frozenset(c for c in self.bottom_stabilizer_cubes if c.cube.position.z == z),
             frozenset(p for p in self.bottom_stabilizer_pipes if p.pipe.u.position.z == z),
             frozenset(p for p in self.temporal_hadamard_pipes if p.pipe.u.position.z == z),
+            frozenset(t for t in self.cultivation_towers if self._cultivation_tower_spans(t, z)),
         )
 
 
@@ -230,6 +242,7 @@ def compile_correlation_surface_to_abstract_observable(
     top_readout_pipes: set[PipeWithArms] = set()
     bottom_stabilizer_pipes: set[PipeWithArms] = set()
     temporal_hadamard_pipes: set[PipeWithObservableBasis] = set()
+    cultivation_towers: set[Cube] = set()
 
     # 1. Handle spatial cubes top readouts
     for pos in correlation_surface.positions:
@@ -285,6 +298,9 @@ def compile_correlation_surface_to_abstract_observable(
         pipe = block_graph.get_pipe(up, vp)
         # Vertical pipes
         if pipe.direction is Direction3D.Z:
+            # A cultivation tower is always the source (i.e. u) of a pipe and connects upwards.
+            if pipe.u.is_cultivation_tower:
+                cultivation_towers.add(pipe.u)
             # Temporal Hadamard might have measurements that should be included
             # during realignment of plaquettes under fixed-bulk convention
             if include_temporal_hadamard_pipes and pipe.kind.has_hadamard:
@@ -322,6 +338,7 @@ def compile_correlation_surface_to_abstract_observable(
         top_readout_pipes=frozenset(top_readout_pipes),
         bottom_stabilizer_pipes=frozenset(bottom_stabilizer_pipes),
         temporal_hadamard_pipes=frozenset(temporal_hadamard_pipes),
+        cultivation_towers=frozenset(cultivation_towers),
     )
 
 
