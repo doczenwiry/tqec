@@ -2,20 +2,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from tqec.circuit.measurement import Measurement
 from tqec.circuit.measurement_map import MeasurementRecordsMap
 from tqec.compile.blocks.layers.atomic.layout import LayoutLayer
+from tqec.compile.blocks.positioning import LayoutPosition2D
 from tqec.compile.observables.abstract_observable import AbstractObservable
 from tqec.compile.observables.builder import (
+    Observable,
     ObservableBuilder,
     ObservableComponent,
     get_observable_with_measurement_records,
 )
+from tqec.utils.position import BlockPosition2D
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from tqec.compile.blocks.cultivation.cultivation_block import CultivationBlock
-    from tqec.compile.blocks.positioning import LayoutPosition2D
     from tqec.compile.tree.node import LayerNode
 
 
@@ -49,6 +52,7 @@ def annotate_observable(
         cultivation_blocks: the cultivation blocks in the computation by z-slice and position
 
     """
+    blocks_by_z = cultivation_blocks or {}
     for z, subtree_root in enumerate(root.children):
         leaves = get_ordered_leaves(subtree_root)
         obs_slice = observable.slice_at_z(z)
@@ -88,8 +92,22 @@ def annotate_observable(
         )
 
         # Annotate the observable in the cultivation towers
-        for tower in obs_slice.cultivation_towers:
-            # TODO: include the measurements from the ``CultivationBlock`` into the observable
+        sorted_towers = sorted(obs_slice.cultivation_towers, key=lambda t: t.position.as_tuple())
+        for tower in sorted_towers:
+            block_position = BlockPosition2D(tower.position.x, tower.position.y)
+            position = LayoutPosition2D.from_block_position(block_position)
+            block = blocks_by_z.get(z, {}).get(position)
+            if block is not None:
+                for leaf in leaves:
+                    _annotate_cultivation_frame_at_node(
+                        leaf,
+                        position,
+                        block,
+                        block_position,
+                        k,
+                        observable_index,
+                        ObservableComponent.CULTIVATION,
+                    )
             # TODO: include the measurements of the expansion layer into the observable
             ...
 
@@ -113,3 +131,51 @@ def _annotate_observable_at_node(
             obs_qubits, measurement_record, observable_index
         )
         node.get_annotations(k).observables.append(obs_annotation)
+
+
+def _annotate_cultivation_frame_at_node(
+    node: LayerNode,
+    position: LayoutPosition2D,
+    block: CultivationBlock,
+    block_position: BlockPosition2D,
+    k: int,
+    observable_index: int,
+    component: ObservableComponent,
+) -> None:
+    """Include the frame measurements of ``block`` performed by ``node`` in the observable."""
+    assert component == ObservableComponent.CULTIVATION
+    if isinstance(node._layer, LayoutLayer):
+        measurements = block.observable_at(node._layer.layers.get(position), k)
+        _annotate_block_measurements_at_node(
+            node, measurements, block_position, k, observable_index
+        )
+
+
+def _annotate_block_measurements_at_node(
+    node: LayerNode,
+    measurements: frozenset[Measurement],
+    block_position: BlockPosition2D,
+    k: int,
+    observable_index: int,
+) -> None:
+    """Include ``measurements``, in the coordinates of a block, in the observable."""
+    if measurements:
+        assert isinstance(node._layer, LayoutLayer)
+        template, _ = node._layer.to_template_and_plaquettes()
+        shape = template.element_shape(k)
+        increments = template.get_increments()
+        dx = block_position.x * shape.x * increments.x
+        dy = block_position.y * shape.y * increments.y
+
+        circuit = node.get_annotations(k).circuit
+        assert circuit is not None
+        records = MeasurementRecordsMap.from_scheduled_circuit(circuit)
+
+        shifted = [m.offset_spatially_by(dx, dy) for m in measurements]
+        node.get_annotations(k).observables.append(
+            Observable(
+                observable_index,
+                [m.qubit for m in shifted],
+                [records[m.qubit][m.offset] for m in shifted],
+            )
+        )

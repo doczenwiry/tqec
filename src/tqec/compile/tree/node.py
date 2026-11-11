@@ -8,9 +8,10 @@ from typing import TYPE_CHECKING, Any, TypeGuard
 
 import stim
 
+from tqec.utils.position import BlockPosition2D
+
 if TYPE_CHECKING:
     from tqec.compile.blocks.cultivation.cultivation_block import CultivationBlock
-    from tqec.compile.blocks.positioning import LayoutPosition2D
     from tqec.compile.tree.annotators.detectors import AnnotateDetectorsOnLayerNode
 
 from tqec.circuit.qubit_map import QubitMap
@@ -22,6 +23,7 @@ from tqec.compile.blocks.layers.atomic.raw import RawCircuitLayer
 from tqec.compile.blocks.layers.composed.base import BaseComposedLayer
 from tqec.compile.blocks.layers.composed.repeated import RepeatedLayer
 from tqec.compile.blocks.layers.composed.sequenced import SequencedLayers
+from tqec.compile.blocks.positioning import LayoutPosition2D
 from tqec.compile.observables.abstract_observable import AbstractObservable
 from tqec.compile.observables.builder import (
     ObservableBuilder,
@@ -29,6 +31,7 @@ from tqec.compile.observables.builder import (
 )
 from tqec.compile.tree.annotations import LayerNodeAnnotations, Polygon
 from tqec.compile.tree.annotators.observables import (
+    _annotate_cultivation_frame_at_node,
     _annotate_observable_at_node,
     get_ordered_leaves,
 )
@@ -327,8 +330,26 @@ class LayerNode:
                             )
 
                             # Measurements of the cultivation towers
-                            for tower in obs_slice.cultivation_towers:
-                                # TODO: register the ObservableComponent.CULTIVATION callbacks
+                            sorted_towers = sorted(
+                                obs_slice.cultivation_towers, key=lambda t: t.position.as_tuple()
+                            )
+                            for tower in sorted_towers:
+                                block_position = BlockPosition2D(tower.position.x, tower.position.y)
+                                position = LayoutPosition2D.from_block_position(block_position)
+                                block = ctx.cultivation_blocks.get(z, {}).get(position)
+                                if block is not None:
+                                    frame_partial = partial(
+                                        _annotate_cultivation_frame_at_node,
+                                        position=position,
+                                        block=block,
+                                        block_position=block_position,
+                                        k=k,
+                                        observable_index=obs_idx,
+                                    )
+                                    for leaf in leaves:
+                                        leaf_dict.setdefault(leaf, []).append(
+                                            (frame_partial, ObservableComponent.CULTIVATION)
+                                        )
                                 # TODO: register the ObservableComponent.EXPANSION callbacks
                                 ...
 
